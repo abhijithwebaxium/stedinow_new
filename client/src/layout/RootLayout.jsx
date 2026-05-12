@@ -7,6 +7,7 @@ import { Stack, alpha } from "@mui/material";
 import AIAssistant from "../components/AIAssistant";
 import CommandBar from "../components/CommandBar";
 import { useState, useEffect } from "react";
+import { brand } from "../theme/shared/themePrimitives";
 
 const RootLayout = () => {
   const [commandBarOpen, setCommandBarOpen] = useState(false);
@@ -41,12 +42,13 @@ const RootLayout = () => {
           width: 0,
           height: "100vh",
           scrollBehavior: "smooth",
-          backgroundColor: theme.palette.mode === 'dark' ? '#0A0A0B' : '#F8F9FB',
-          backgroundImage: theme.palette.mode === 'dark' 
-            ? `radial-gradient(at 0% 0%, ${alpha(theme.palette.primary.main, 0.05)} 0, transparent 50%), 
-               radial-gradient(at 50% 0%, ${alpha(theme.palette.secondary.main, 0.05)} 0, transparent 50%)`
-            : `radial-gradient(at 0% 0%, ${alpha(theme.palette.primary.main, 0.03)} 0, transparent 50%), 
-               radial-gradient(at 50% 0%, ${alpha(theme.palette.secondary.main, 0.03)} 0, transparent 50%)`,
+          backgroundColor: (theme.vars || theme).palette.background.default,
+          backgroundImage: `radial-gradient(at 0% 0%, ${alpha(brand[400], 0.05)} 0, transparent 50%), 
+                           radial-gradient(at 50% 0%, ${alpha(brand[600], 0.05)} 0, transparent 50%)`,
+          ...theme.applyStyles('dark', {
+            backgroundImage: `radial-gradient(at 0% 0%, ${alpha(brand[300], 0.1)} 0, transparent 50%), 
+                             radial-gradient(at 50% 0%, ${alpha(brand[500], 0.1)} 0, transparent 50%)`,
+          }),
           overflowY: "auto",
           overflowX: "hidden",
         })}

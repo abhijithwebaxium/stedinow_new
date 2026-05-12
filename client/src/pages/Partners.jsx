@@ -8,6 +8,7 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
+import { HeroBox, GlassCard } from '../components/styled';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import LockResetIcon from '@mui/icons-material/LockReset';
@@ -19,39 +20,7 @@ import EditPartnerModal from '../components/modals/EditPartnerModal';
 import PartnerDetailsModal from '../components/modals/PartnerDetailsModal';
 import { styled } from '@mui/material/styles';
 
-const HeroBox = styled(Box)(({ theme }) => ({
-  background: theme.palette.mode === 'dark'
-    ? alpha(theme.palette.background.paper, 0.5)
-    : alpha(theme.palette.background.paper, 0.3),
-  borderRadius: '40px',
-  padding: theme.spacing(6, 6),
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  position: 'relative',
-  overflow: 'hidden',
-  marginBottom: theme.spacing(4),
-  backdropFilter: "blur(24px) saturate(180%)",
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: '-30%',
-    right: '-10%',
-    width: '400px',
-    height: '400px',
-    background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.08)} 0%, transparent 70%)`,
-    filter: 'blur(60px)',
-    zIndex: 0,
-  }
-}));
-
-const GlassCard = styled(Box)(({ theme }) => ({
-  background: theme.palette.mode === 'dark' 
-    ? alpha(theme.palette.background.paper, 0.4) 
-    : alpha('#FFFFFF', 0.8),
-  backdropFilter: "blur(24px) saturate(180%)",
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  borderRadius: "32px",
-  overflow: 'hidden',
-}));
+// HeroBox and GlassCard are now imported from ../components/styled
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 

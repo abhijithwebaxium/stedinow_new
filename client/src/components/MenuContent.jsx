@@ -106,9 +106,11 @@ export default function MenuContent() {
                         px: 2,
                         position: 'relative',
                         '&.Mui-selected': {
-                          bgcolor: '#101935 !important', // Deep Navy
+                          bgcolor: theme.palette.mode === 'dark' ? '#000000 !important' : '#101935 !important',
                           color: '#ffffff !important',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                          boxShadow: theme.palette.mode === 'dark' 
+                            ? `0 4px 12px ${alpha('#000', 0.5)}` 
+                            : '0 4px 12px rgba(0,0,0,0.15)',
                           '&::before': {
                             content: '""',
                             position: 'absolute',
@@ -117,11 +119,11 @@ export default function MenuContent() {
                             height: '60%',
                             width: '4px',
                             borderRadius: '0 4px 4px 0',
-                            bgcolor: '#3b82f6', // Bright blue indicator
+                            bgcolor: theme.palette.primary.main, // Primary color indicator
                             opacity: 1,
                           },
                           '&:hover': {
-                            bgcolor: '#1e293b !important',
+                            bgcolor: theme.palette.mode === 'dark' ? '#111111 !important' : '#1e293b !important',
                           },
                           '& .MuiListItemIcon-root': {
                             color: '#ffffff !important',

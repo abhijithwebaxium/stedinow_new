@@ -33,6 +33,7 @@ import BasicMenu from './customComponents/BasicMenu';
 import CustomComboBox from './customComponents/CustomComboBox';
 import CustomInput from './customComponents/CustomInput';
 import MenuButton from './customComponents/MenuButton';
+import { brand, gray } from '../theme/shared/themePrimitives';
 
 const Item = styled(Paper)(({ theme }) => ({
   ...theme.typography.body2,
@@ -53,16 +54,18 @@ const StyledTable = styled(Table)(({ theme }) => ({
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
   transition: 'all 0.2s ease',
   '&:hover': {
-    backgroundColor: alpha(theme.palette.primary.main, 0.02),
+    backgroundColor: (theme.vars || theme).palette.mode === 'dark' 
+      ? alpha(brand[400], 0.05) 
+      : alpha(brand[400], 0.02),
     '& td': {
-      color: theme.palette.primary.main,
+      color: brand[500],
     }
   },
 }));
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   padding: '16px 20px',
-  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
+  borderBottom: `1px solid ${alpha(gray[300], 0.1)}`,
   fontSize: '0.875rem',
   fontWeight: 500,
 }));
@@ -70,18 +73,20 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 const StyledTableHeadRow = styled(TableRow)(({ theme }) => ({
   '& th': {
     padding: '20px',
-    backgroundColor: alpha(theme.palette.background.paper, 0.5),
-    color: theme.palette.text.secondary,
+    backgroundColor: (theme.vars || theme).palette.mode === 'dark'
+      ? alpha('#121214', 0.8)
+      : alpha(theme.palette.background.paper, 0.5),
+    color: (theme.vars || theme).palette.text.secondary,
     fontWeight: 900,
     textTransform: 'uppercase',
     letterSpacing: '0.1em',
     fontSize: '0.7rem',
-    borderBottom: `2px solid ${alpha(theme.palette.divider, 0.1)}`,
+    borderBottom: `2px solid ${alpha(gray[300], 0.2)}`,
   },
 }));
 
 const StyledPagination = styled(TablePagination)(({ theme }) => ({
-  borderTop: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
+  borderTop: `1px solid ${alpha(gray[300], 0.1)}`,
   '& .MuiTablePagination-toolbar': {
     padding: '12px 24px',
   },
@@ -328,7 +333,7 @@ function AdvancedDataTable({
         </Stack>
       ))}
 
-      <Box borderTop={'1px solid rgb(224 224 224)'} p={1}>
+      <Box borderTop={`1px solid ${theme.palette.divider}`} p={1}>
         <Stack direction={'row'} spacing={2}>
           <Button
             variant="text"
@@ -396,8 +401,10 @@ function AdvancedDataTable({
           py: 2,
           px: 3,
           gap: 1.5,
-          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
-          bgcolor: alpha(theme.palette.background.paper, 0.2)
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          bgcolor: (theme.vars || theme).palette.mode === 'dark'
+            ? alpha('#121214', 0.5)
+            : alpha(theme.palette.background.paper, 0.2)
         }}
       >
         <CustomDropdown

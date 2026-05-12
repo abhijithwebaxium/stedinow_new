@@ -300,21 +300,21 @@ export const colorSchemes = {
       grey: {
         ...gray,
       },
-      divider: alpha(gray[700], 0.6),
+      divider: alpha(gray[700], 0.3),
       background: {
-        default: gray[900],
-        paper: 'hsl(220, 30%, 7%)',
+        default: '#0A0A0B',
+        paper: '#121214',
       },
       text: {
         primary: 'hsl(0, 0%, 100%)',
         secondary: gray[400],
       },
       action: {
-        hover: alpha(gray[600], 0.2),
-        selected: alpha(gray[600], 0.3),
+        hover: alpha(gray[600], 0.15),
+        selected: alpha(gray[600], 0.25),
       },
       baseShadow:
-        'hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px',
+        'hsla(0, 0%, 0%, 0.8) 0px 4px 16px 0px, hsla(0, 0%, 0%, 0.9) 0px 8px 16px -5px',
     },
   },
 };

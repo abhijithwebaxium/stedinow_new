@@ -17,7 +17,8 @@ import {
   CircularProgress,
   Tooltip,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { styled, alpha, useTheme } from "@mui/material/styles";
+import { HeroBox, GlassCard as SharedGlassCard } from '../components/styled';
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -97,43 +98,16 @@ const FEE_PAYMENT = [
 ];
 
 // Styled Components
-const HeroBox = styled(Box)(({ theme }) => ({
-  background: theme.palette.mode === 'dark'
-    ? alpha(theme.palette.background.paper, 0.5)
-    : alpha(theme.palette.background.paper, 0.3),
-  borderRadius: '40px',
-  padding: theme.spacing(6, 6),
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  position: 'relative',
-  overflow: 'hidden',
-  marginBottom: theme.spacing(4),
-  backdropFilter: "blur(24px) saturate(180%)",
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: '-30%',
-    right: '-10%',
-    width: '400px',
-    height: '400px',
-    background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.08)} 0%, transparent 70%)`,
-    filter: 'blur(60px)',
-    zIndex: 0,
-  }
-}));
-
-const GlassCard = styled(Card)(({ theme }) => ({
-  background: theme.palette.mode === 'dark' 
-    ? alpha(theme.palette.background.paper, 0.4) 
-    : alpha('#FFFFFF', 0.8),
-  backdropFilter: "blur(24px) saturate(180%)",
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  boxShadow: theme.palette.mode === 'dark'
-    ? '0 10px 40px rgba(0,0,0,0.3)'
-    : '0 10px 40px rgba(0,0,0,0.02)',
-  borderRadius: "32px",
+// HeroBox and GlassCard are now imported from ../components/styled
+const GlassCard = styled(SharedGlassCard)(({ theme }) => ({
   transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-  overflow: 'hidden',
   position: 'relative',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: theme.palette.mode === 'dark'
+      ? `0 20px 40px ${alpha('#000', 0.6)}`
+      : `0 20px 40px ${alpha(theme.palette.grey[400], 0.2)}`,
+  }
 }));
 
 const InfoLabel = styled(Typography)(({ theme }) => ({

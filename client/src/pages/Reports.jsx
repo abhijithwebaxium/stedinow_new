@@ -37,30 +37,9 @@ import {
   FlightTakeoff as FlightIcon,
 } from '@mui/icons-material';
 import { alpha, styled } from '@mui/material/styles';
+import { HeroBox } from '../components/styled';
 
-const HeroBox = styled(Box)(({ theme }) => ({
-  background: theme.palette.mode === 'dark'
-    ? alpha(theme.palette.background.paper, 0.5)
-    : alpha(theme.palette.background.paper, 0.3),
-  borderRadius: '40px',
-  padding: theme.spacing(6, 6),
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  position: 'relative',
-  overflow: 'hidden',
-  marginBottom: theme.spacing(4),
-  backdropFilter: "blur(24px) saturate(180%)",
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: '-30%',
-    right: '-10%',
-    width: '400px',
-    height: '400px',
-    background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.08)} 0%, transparent 70%)`,
-    filter: 'blur(60px)',
-    zIndex: 0,
-  }
-}));
+// HeroBox is now imported from ../components/styled
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';

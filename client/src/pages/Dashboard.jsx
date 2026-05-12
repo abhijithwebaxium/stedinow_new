@@ -17,37 +17,29 @@ import {
   LinearProgress,
   useTheme,
   useMediaQuery,
-  styled,
-  alpha,
 } from "@mui/material";
+import { styled, alpha } from "@mui/material/styles";
+import { GlassCard as SharedGlassCard } from '../components/styled';
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import GroupIcon from "@mui/icons-material/Group";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { selectUser } from "../store/slices/userSlice";
+import { brand, gray } from "../theme/shared/themePrimitives";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-const GlassCard = styled(Card)(({ theme }) => ({
-  background: theme.palette.mode === 'dark' 
-    ? alpha(theme.palette.background.paper, 0.4) 
-    : alpha('#FFFFFF', 0.8),
-  backdropFilter: "blur(24px) saturate(180%)",
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  boxShadow: theme.palette.mode === 'dark'
-    ? '0 10px 40px rgba(0,0,0,0.3)'
-    : '0 10px 40px rgba(0,0,0,0.02)',
-  borderRadius: "32px",
+// GlassCard is now imported from ../components/styled
+const GlassCard = styled(SharedGlassCard)(({ theme }) => ({
   transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-  overflow: 'hidden',
   position: 'relative',
   "&:hover": {
     transform: "translateY(-8px)",
     boxShadow: theme.palette.mode === 'dark'
-      ? '0 20px 60px rgba(0,0,0,0.5)'
-      : '0 20px 60px rgba(0,0,0,0.06)',
-    borderColor: alpha(theme.palette.primary.main, 0.3),
+      ? `0 20px 60px ${alpha('#000', 0.6)}`
+      : `0 20px 60px ${alpha(gray[400], 0.08)}`,
+    borderColor: alpha(brand[400], 0.3),
   },
 }));
 
@@ -68,7 +60,7 @@ const StatIconBox = styled(Box)(({ theme, color }) => ({
 const CardRibbon = styled(Box)(({ theme, color }) => ({
   marginTop: 'auto',
   paddingTop: theme.spacing(2),
-  borderTop: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
+  borderTop: `1px solid ${alpha(gray[400], 0.1)}`,
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(1.5),
@@ -177,7 +169,7 @@ function Dashboard() {
         overflow: "hidden",
       }}
     >
-      {loading && <LinearProgress sx={{ mb: 4, borderRadius: 2, height: 6, bgcolor: alpha(theme.palette.primary.main, 0.05) }} />}
+      {loading && <LinearProgress sx={{ mb: 4, borderRadius: 2, height: 6, bgcolor: alpha(brand[400], 0.05) }} />}
 
       {/* Stats Cards - SkillCity Style */}
       <Box sx={{ mb: 8 }}>
@@ -190,11 +182,11 @@ function Dashboard() {
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>TOTAL STUDENTS</Typography>
                     <Typography variant="h3" sx={{ fontWeight: 900, mt: 0.5, letterSpacing: -1 }}>{stats.totalStudents}</Typography>
                   </Box>
-                  <StatIconBox color={theme.palette.primary.main}>
+                  <StatIconBox color={brand[400]}>
                     <GroupIcon />
                   </StatIconBox>
                 </Box>
-                <CardRibbon color={theme.palette.primary.main}>
+                <CardRibbon color={brand[400]}>
                   <Typography variant="caption" sx={{ fontWeight: 900, textTransform: 'uppercase', tracking: 1.5, opacity: 0.6 }}>Active Registry</Typography>
                 </CardRibbon>
               </CardContent>
@@ -288,10 +280,10 @@ function Dashboard() {
               </button>
             </Box>
 
-            <TableContainer sx={{ borderRadius: "24px", overflow: 'hidden', border: `1px solid ${alpha(theme.palette.divider, 0.05)}` }}>
+            <TableContainer sx={{ borderRadius: "24px", overflow: 'hidden', border: `1px solid ${alpha(gray[300], 0.1)}` }}>
               <Table>
                 <TableHead>
-                  <TableRow sx={{ bgcolor: alpha(theme.palette.background.default, 0.5) }}>
+                  <TableRow sx={{ bgcolor: alpha(gray[100], 0.5) }}>
                     <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 3, tracking: 2, textTransform: 'uppercase' }}>Identity</TableCell>
                     {!isMobile && <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 3, tracking: 2, textTransform: 'uppercase' }}>Contact</TableCell>}
                     <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 3, tracking: 2, textTransform: 'uppercase' }}>Phase</TableCell>
@@ -312,8 +304,8 @@ function Dashboard() {
                             <Avatar sx={{ 
                               width: 44, 
                               height: 44, 
-                              bgcolor: alpha(theme.palette.primary.main, 0.1), 
-                              color: "primary.main", 
+                              bgcolor: alpha(brand[400], 0.1), 
+                              color: brand[500], 
                               fontWeight: 900,
                               borderRadius: '14px',
                               fontSize: '1rem'
