@@ -22,32 +22,6 @@ import whatsappRouter from './routes/whatsappRoute.js';
 
 const app = express();
 
-const startServer = async () => {
-  await connectDB(); // Ensure DB is connected before starting the server
-
-  // Dev-only logging
-  if (process.env.NODE_ENV === 'development') {
-    const { default: morgan } = await import('morgan');
-    app.use(morgan('dev'));
-  }
-
-  const PORT = process.env.PORT || 4000;
-
-  app.listen(PORT, () => {
-    console.log(`
-    ========================================
-    🚀 Server is running
-    Port: ${PORT}
-    URL: http://localhost:${PORT}
-    API: http://localhost:${PORT}/api
-    ========================================
-    `);
-  });
-};
-
-// Start the server
-startServer();
-
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
@@ -70,5 +44,27 @@ app.use('/api/whatsapp', whatsappRouter);
 
 // Error Handler Middleware (Keep at the End)
 app.use(errorHandler);
+
+const startServer = async () => {
+  await connectDB();
+
+  if (process.env.NODE_ENV === 'development') {
+    const { default: morgan } = await import('morgan');
+    app.use(morgan('dev'));
+  }
+
+  const PORT = process.env.PORT || 4000;
+
+  app.listen(PORT, () => {
+    console.log(`
+    ========================================
+    Server is running
+    Port: ${PORT}
+    ========================================
+    `);
+  });
+};
+
+startServer();
 
 export default app;

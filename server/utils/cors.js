@@ -2,19 +2,21 @@ import cors from 'cors';
 
 const configureCors = () => {
   const allowedOrigins = [
-    process.env.CLIENT_URL || 'http://localhost:5173',
+    'https://stedinow-new.vercel.app',
+    process.env.CLIENT_URL,
     'http://localhost:3000',
+    'http://localhost:5173',
     'http://localhost:5174',
-  ];
+  ].filter(Boolean);
 
   return cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn(`CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
