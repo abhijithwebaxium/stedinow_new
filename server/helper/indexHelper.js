@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import Users from '../models/user.js';
-import Students from '../models/student.js';
+import Students from '../models/Student.js';
 
 export const isValidDate = (str) => !isNaN(Date.parse(str));
 

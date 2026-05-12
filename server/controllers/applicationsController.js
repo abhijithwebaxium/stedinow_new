@@ -1,5 +1,5 @@
 import Application from '../models/application.js';
-import Student from '../models/student.js';
+import Student from '../models/Student.js';
 import { isValidObjectId } from '../helper/indexHelper.js';
 
 // Get all applications for a specific student

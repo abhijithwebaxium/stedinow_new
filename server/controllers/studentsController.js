@@ -1,4 +1,4 @@
-import Students from '../models/student.js';
+import Students from '../models/Student.js';
 import Document from '../models/document.js';
 import { isValidObjectId } from '../helper/indexHelper.js';
 import { DEFAULT_VALUES, getChecklistForStage, STAGES } from '../config/constants.js';

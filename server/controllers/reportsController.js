@@ -1,4 +1,4 @@
-import Student from '../models/student.js';
+import Student from '../models/Student.js';
 import User from '../models/user.js';
 
 // EOD Report - End of Day Report

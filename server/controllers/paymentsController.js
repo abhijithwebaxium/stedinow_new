@@ -1,5 +1,5 @@
 import Payment from '../models/payment.js';
-import Student from '../models/student.js';
+import Student from '../models/Student.js';
 import { isValidObjectId } from '../helper/indexHelper.js';
 import { sendPaymentConfirmation } from '../utils/whatsappService.js';
 import { sendPaymentConfirmationEmail } from '../utils/emailService.js';
