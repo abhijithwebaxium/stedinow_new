@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Build outputs
+dist/
+build/
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backups
+backups/
+*.bson
+*.gz
+
+# Misc
+*.pem
+.cache/
+temp/
+tmp/
+
+# Claude AI (local development only)
+.claude/
+claude.md
+CLAUDE.md
+
+# Uploaded files
+uploads/
+
+# Data / planning files
+*.xlsx
+stedinow_workflow.txt
