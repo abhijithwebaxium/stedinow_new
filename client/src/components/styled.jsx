@@ -83,3 +83,38 @@ export const StyledFormContainer = styled(Box)(({ theme }) => ({
     boxShadow: `0 24px 48px ${alpha('#000', 0.5)}`,
   })
 }));
+
+/**
+ * PremiumButton - A highly aesthetic button with glassmorphism and smooth transitions.
+ */
+export const PremiumButton = styled(Box)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(1.2, 3),
+  borderRadius: '14px',
+  cursor: 'pointer',
+  fontSize: '0.8rem',
+  fontWeight: 900,
+  textTransform: 'uppercase',
+  letterSpacing: '1.5px',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  background: theme.palette.mode === 'dark'
+    ? alpha(brand[500], 0.15)
+    : alpha(brand[500], 0.08),
+  color: brand[500],
+  border: `1px solid ${alpha(brand[500], 0.2)}`,
+  position: 'relative',
+  overflow: 'hidden',
+  userSelect: 'none',
+  '&:hover': {
+    background: brand[500],
+    color: '#fff',
+    transform: 'translateY(-2px)',
+    boxShadow: `0 8px 20px ${alpha(brand[500], 0.3)}`,
+    borderColor: brand[500],
+  },
+  '&:active': {
+    transform: 'translateY(0)',
+  }
+}));

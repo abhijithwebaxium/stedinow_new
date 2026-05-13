@@ -172,11 +172,11 @@ function Dashboard() {
       {loading && <LinearProgress sx={{ mb: 4, borderRadius: 2, height: 6, bgcolor: alpha(brand[400], 0.05) }} />}
 
       {/* Stats Cards - SkillCity Style */}
-      <Box sx={{ mb: 8 }}>
+      <Box sx={{ mb: 4 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6} md={3}>
-            <GlassCard>
-              <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Grid item xs={12} sm={6} md={6} lg={3}>
+            <GlassCard sx={{ minHeight: 200 }}>
+              <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>TOTAL STUDENTS</Typography>
@@ -193,9 +193,9 @@ function Dashboard() {
             </GlassCard>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <GlassCard>
-              <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Grid item xs={12} sm={6} md={6} lg={3}>
+            <GlassCard sx={{ minHeight: 200 }}>
+              <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>NEW APPLICATIONS</Typography>
@@ -212,9 +212,9 @@ function Dashboard() {
             </GlassCard>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <GlassCard>
-              <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Grid item xs={12} sm={6} md={6} lg={3}>
+            <GlassCard sx={{ minHeight: 200 }}>
+              <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>VISA APPROVED</Typography>
@@ -231,9 +231,9 @@ function Dashboard() {
             </GlassCard>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
-            <GlassCard>
-              <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Grid item xs={12} sm={6} md={6} lg={3}>
+            <GlassCard sx={{ minHeight: 200 }}>
+              <CardContent sx={{ p: 4, display: 'flex', flexDirection: 'column', height: '100%' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>CONVERSION RATE</Typography>
@@ -255,13 +255,13 @@ function Dashboard() {
       {/* Recent Students Table */}
       <Box sx={{ overflow: "hidden", width: "100%" }}>
         <GlassCard>
-          <CardContent>
+          <CardContent sx={{ p: 3 }}>
             <Box
               sx={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                mb: 4,
+                mb: 3,
               }}
             >
               <Box>
@@ -272,23 +272,17 @@ function Dashboard() {
                   Eligibility review queue for new students
                 </Typography>
               </Box>
-              <button
-                onClick={() => navigate("/applications")}
-                className="px-4 py-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all text-sm font-black uppercase tracking-widest"
-              >
-                View All Queue
-              </button>
             </Box>
 
             <TableContainer sx={{ borderRadius: "24px", overflow: 'hidden', border: `1px solid ${alpha(gray[300], 0.1)}` }}>
               <Table>
                 <TableHead>
                   <TableRow sx={{ bgcolor: alpha(gray[100], 0.5) }}>
-                    <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 3, tracking: 2, textTransform: 'uppercase' }}>Identity</TableCell>
-                    {!isMobile && <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 3, tracking: 2, textTransform: 'uppercase' }}>Contact</TableCell>}
-                    <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 3, tracking: 2, textTransform: 'uppercase' }}>Phase</TableCell>
-                    {!isTablet && <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 3, tracking: 2, textTransform: 'uppercase' }}>Status</TableCell>}
-                    {!isMobile && <TableCell align="right" sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 3, tracking: 2, textTransform: 'uppercase' }}>Date</TableCell>}
+                    <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 2, pl: 4, letterSpacing: 2, textTransform: 'uppercase' }}>Identity</TableCell>
+                    {!isMobile && <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 2, letterSpacing: 2, textTransform: 'uppercase' }}>Contact</TableCell>}
+                    <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 2, letterSpacing: 2, textTransform: 'uppercase' }}>Phase</TableCell>
+                    {!isTablet && <TableCell sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 2, letterSpacing: 2, textTransform: 'uppercase' }}>Status</TableCell>}
+                    {!isMobile && <TableCell align="right" sx={{ fontWeight: 900, color: 'text.secondary', fontSize: '0.65rem', py: 2, pr: 4, letterSpacing: 2, textTransform: 'uppercase' }}>Date</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -299,7 +293,7 @@ function Dashboard() {
                         hover
                         sx={{ '&:last-child td, &:last-child th': { border: 0 }, transition: 'background-color 0.2s ease' }}
                       >
-                        <TableCell>
+                        <TableCell sx={{ pl: 4 }}>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
                             <Avatar sx={{ 
                               width: 44, 
@@ -348,7 +342,7 @@ function Dashboard() {
                           </TableCell>
                         )}
                         {!isMobile && (
-                          <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: '0.8rem' }}>
+                          <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: '0.8rem', pr: 4 }}>
                             {new Date(student.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                           </TableCell>
                         )}
