@@ -484,6 +484,23 @@ export const sendWelcomeEmail = async (student) => {
               <h2 style="color: #7C3AED; margin: 10px 0;">${student.studentId}</h2>
             </div>
 
+            <div class="info-box" style="margin-top: 16px; border-left: 4px solid #7C3AED; padding-left: 20px;">
+              <h3 style="margin-top: 0;">🔐 Your Portal Login Credentials</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 6px 0; color: #666; width: 120px;">Email</td>
+                  <td style="padding: 6px 0; font-weight: 600; color: #1a1a1a;">${student.email}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #666;">Password</td>
+                  <td style="padding: 6px 0; font-weight: 600; color: #1a1a1a;">${student.phone} <span style="font-size: 12px; color: #888;">(your registered phone number)</span></td>
+                </tr>
+              </table>
+              <p style="margin: 14px 0 0; font-size: 13px; color: #666; background: #f5f0ff; border-radius: 6px; padding: 10px;">
+                💡 For your security, please change your password after your first login via <strong>Profile → Change Password</strong>.
+              </p>
+            </div>
+
             <p>We're excited to guide you through every step of your study abroad journey. Our dedicated team will be with you from application to arrival.</p>
 
             <h3>What's Next?</h3>
@@ -494,7 +511,7 @@ export const sendWelcomeEmail = async (student) => {
               <li>We'll handle all application processes</li>
             </ul>
 
-            <p>You can track your progress and upload documents through our student portal.</p>
+            <p>You can track your application status, upload documents, and stay connected with your counselor through the student portal.</p>
 
             <a href="https://stedinow-new.vercel.app/student/login" class="button" style="color: #ffffff !important; text-decoration: none;">Access Student Portal</a>
 
@@ -517,6 +534,12 @@ Hi ${student.name},
 Welcome to StediNow!
 
 Your Student ID: ${student.studentId}
+
+--- Portal Login Credentials ---
+Email:    ${student.email}
+Password: ${student.phone} (your registered phone number)
+
+Please change your password after your first login via Profile → Change Password.
 
 We're excited to guide you through your study abroad journey.
 

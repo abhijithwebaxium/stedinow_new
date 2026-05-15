@@ -13,10 +13,11 @@ const generateToken = (partnerId) => {
 
 // Set token cookie
 const setTokenCookie = (res, token) => {
+  const isProd = process.env.NODE_ENV === 'production';
   res.cookie('partner_access_token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 };
@@ -121,8 +122,12 @@ export const partnerLogin = async (req, res, next) => {
 // @access  Private (Partner)
 export const partnerLogout = async (req, res, next) => {
   try {
-    // Clear cookie
-    res.clearCookie('partner_access_token');
+    const isProd = process.env.NODE_ENV === 'production';
+    res.clearCookie('partner_access_token', {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+    });
 
     res.status(200).json({
       status: 'success',
