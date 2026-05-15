@@ -8,8 +8,11 @@ import {
   InputAdornment,
   IconButton,
   Paper,
+  Container,
+  alpha,
+  useTheme
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, LockOutlined, EmailOutlined } from '@mui/icons-material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -17,50 +20,55 @@ import { loginStart, loginSuccess, loginFailure } from '../store/slices/userSlic
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
+const GlassCard = ({ children, sx }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      background: (theme) => alpha(theme.palette.background.paper, 0.7),
+      backdropFilter: 'blur(20px)',
+      borderRadius: '24px',
+      border: '1px solid',
+      borderColor: (theme) => alpha(theme.palette.divider, 0.1),
+      p: { xs: 3, sm: 6 },
+      boxShadow: (theme) => `0 20px 40px ${alpha(theme.palette.common.black, 0.1)}`,
+      ...sx
+    }}
+  >
+    {children}
+  </Paper>
+);
+
 function Login() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const theme = useTheme();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-
     if (!formData.email || !formData.password) {
       setError('Please provide email and password');
       return;
     }
-
     setLoading(true);
     dispatch(loginStart());
-
     try {
       const response = await axios.post(
         `${API_URL}/api/login`,
         { email: formData.email, password: formData.password },
         { withCredentials: true }
       );
-
       if (response.data.status === 'success') {
-        const userData = {
-          ...response.data.user,
-          token: response.data.token || 'dummy-token',
-        };
-
+        const userData = { ...response.data.user, token: response.data.token || 'dummy-token' };
         dispatch(loginSuccess(userData));
         navigate('/dashboard');
       }
@@ -76,81 +84,53 @@ function Login() {
   return (
     <Box
       sx={{
-        display: 'flex',
         minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `radial-gradient(circle at 0% 0%, ${alpha(theme.palette.primary.main, 0.15)} 0%, transparent 50%),
+                     radial-gradient(circle at 100% 100%, ${alpha(theme.palette.secondary.main, 0.15)} 0%, transparent 50%)`,
         bgcolor: 'background.default',
+        p: 2,
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
-      {/* Left Side - Gradient Section */}
-      <Box
-        sx={{
-          flex: { xs: 0, md: 1.2, lg: 1.5 },
-          display: { xs: 'none', md: 'flex' },
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          p: 6,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)',
-          },
-        }}
-      >
-        <Typography
-          variant="h2"
-          sx={{ fontWeight: 800, mb: 2, letterSpacing: -1, position: 'relative', zIndex: 1 }}
-        >
-          Stedinow
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{ opacity: 0.9, fontWeight: 300, maxWidth: '500px', position: 'relative', zIndex: 1 }}
-        >
-          Empowering students to achieve their global education dreams.
-        </Typography>
-      </Box>
+      {/* Decorative Circles */}
+      <Box sx={{ position: 'absolute', top: -100, left: -100, width: 300, height: 300, borderRadius: '50%', background: alpha(theme.palette.primary.main, 0.1), filter: 'blur(50px)' }} />
+      <Box sx={{ position: 'absolute', bottom: -100, right: -100, width: 300, height: 300, borderRadius: '50%', background: alpha(theme.palette.secondary.main, 0.1), filter: 'blur(50px)' }} />
 
-      {/* Right Side - Login Form Section */}
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          p: { xs: 3, sm: 6, md: 8 },
-        }}
-      >
-        <Paper
-          elevation={0}
-          sx={{
-            maxWidth: '450px',
-            width: '100%',
-            bgcolor: 'transparent',
-          }}
-        >
-          <Box sx={{ mb: 6, textAlign: 'center' }}>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, mb: 1, color: 'text.primary' }}
-            >
-              Welcome Back
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Enter your credentials to access your dashboard
-            </Typography>
-          </Box>
+      <Container maxWidth="sm">
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: 900,
+              letterSpacing: '-2px',
+              mb: 1,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontFamily: '"Outfit", sans-serif'
+            }}
+          >
+            Stedinow
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 500, opacity: 0.8 }}>
+            Admin Portal Management System
+          </Typography>
+        </Box>
+
+        <GlassCard>
+          <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, textAlign: 'center', fontFamily: '"Outfit", sans-serif' }}>
+            Welcome Back
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4, textAlign: 'center', fontWeight: 500 }}>
+            Enter your administrative credentials
+          </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+            <Alert severity="error" sx={{ mb: 3, borderRadius: '12px', fontWeight: 600 }}>
               {error}
             </Alert>
           )}
@@ -161,14 +141,18 @@ function Login() {
               label="Email Address"
               name="email"
               type="email"
-              variant="outlined"
               value={formData.email}
               onChange={handleChange}
               disabled={loading}
               required
-              sx={{ mb: 2.5 }}
+              sx={{ mb: 3 }}
               InputProps={{
-                sx: { borderRadius: 2 },
+                sx: { borderRadius: '16px', bgcolor: alpha(theme.palette.divider, 0.03) },
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailOutlined sx={{ color: 'text.secondary', opacity: 0.5 }} />
+                  </InputAdornment>
+                ),
               }}
             />
             <TextField
@@ -176,21 +160,21 @@ function Login() {
               label="Password"
               name="password"
               type={showPassword ? 'text' : 'password'}
-              variant="outlined"
               value={formData.password}
               onChange={handleChange}
               disabled={loading}
               required
               sx={{ mb: 1 }}
               InputProps={{
-                sx: { borderRadius: 2 },
+                sx: { borderRadius: '16px', bgcolor: alpha(theme.palette.divider, 0.03) },
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockOutlined sx={{ color: 'text.secondary', opacity: 0.5 }} />
+                  </InputAdornment>
+                ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      sx={{ color: 'text.secondary' }}
-                    >
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -198,14 +182,14 @@ function Login() {
               }}
             />
 
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
               <Typography
                 variant="body2"
                 sx={{
                   color: 'primary.main',
                   cursor: 'pointer',
-                  fontWeight: 600,
-                  '&:hover': { textDecoration: 'underline' },
+                  fontWeight: 700,
+                  '&:hover': { opacity: 0.8 },
                 }}
               >
                 Forgot password?
@@ -219,29 +203,32 @@ function Login() {
               size="large"
               disabled={loading}
               sx={{
-                py: 1.5,
-                borderRadius: 2,
+                py: 2,
+                borderRadius: '16px',
                 fontSize: '1rem',
-                fontWeight: 700,
+                fontWeight: 800,
                 textTransform: 'none',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                color: '#FFFFFF',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.25)}`,
+                color: '#fff',
                 '&:hover': {
-                  boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+                  boxShadow: `0 12px 32px ${alpha(theme.palette.primary.main, 0.35)}`,
+                  transform: 'translateY(-2px)'
                 },
+                transition: 'all 0.3s ease'
               }}
             >
-              {loading ? 'Verifying...' : 'Sign In'}
+              {loading ? 'Authenticating...' : 'Sign In to Dashboard'}
             </Button>
           </Box>
-        </Paper>
+        </GlassCard>
 
-        <Box sx={{ mt: 'auto', pt: 4 }}>
-          <Typography variant="caption" color="text.disabled">
-            © {new Date().getFullYear()} Stedinow CRM. All rights reserved.
+        <Box sx={{ mt: 6, textAlign: 'center' }}>
+          <Typography variant="caption" sx={{ color: 'text.disabled', fontWeight: 600 }}>
+            © {new Date().getFullYear()} Stedinow CRM • Secure Admin Access
           </Typography>
         </Box>
-      </Box>
+      </Container>
     </Box>
   );
 }

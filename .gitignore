@@ -55,3 +55,11 @@ uploads/
 # Data / planning files
 *.xlsx
 stedinow_workflow.txt
+
+# Internal roadmap / planning docs
+*_ROADMAP.md
+
+# One-off dev/utility scripts (never commit these)
+purge_*.mjs
+seed_*.mjs
+reset_*.mjs

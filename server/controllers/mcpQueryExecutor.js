@@ -20,7 +20,7 @@ const MODEL_MAPPING = {
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const model = genAI.getGenerativeModel({ model: config.gemini.model });
 
 /**
  * Executes a resolved context against the database and generates a natural language response

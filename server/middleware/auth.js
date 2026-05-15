@@ -1,5 +1,6 @@
 import User from '../models/user.js';
 import Partner from '../models/Partner.js';
+import Student from '../models/Student.js';
 import jwt from 'jsonwebtoken';
 
 export const requireAuth = async (req, res, next) => {
@@ -235,6 +236,62 @@ export const canPartnerEditStudent = (req, res, next) => {
     }
 
     next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ========== STUDENT AUTHENTICATION MIDDLEWARE ==========
+
+// Require student authentication
+export const requireStudentAuth = async (req, res, next) => {
+  try {
+    const token = req.cookies?.student_access_token; // Get token from cookies
+
+    if (!token) {
+      req.user = { isAuthenticated: false };
+      return next();
+    }
+
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    if (decoded.type !== 'student') {
+       req.user = { isAuthenticated: false };
+       return next();
+    }
+
+    const student = await Student.findById(decoded.id);
+
+    if (!student || student.deleted) {
+      req.user = { isAuthenticated: false };
+      return next();
+    }
+
+    req.user = {
+      id: student._id,
+      name: student.name,
+      email: student.email,
+      type: 'student',
+      isAuthenticated: true,
+    };
+
+    next();
+  } catch (error) {
+    req.user = { isAuthenticated: false };
+    error.statusCode = error.statusCode || 401;
+    next(error);
+  }
+};
+
+// Check if student is authenticated
+export const isStudentAuthenticated = async (req, res, next) => {
+  try {
+    if (req.user && req.user.isAuthenticated && req.user.type === 'student') {
+      return next();
+    }
+
+    const error = new Error('Student authentication required.');
+    error.statusCode = 401;
+    throw error;
   } catch (err) {
     next(err);
   }

@@ -6,11 +6,13 @@ import Header from "../components/Header";
 import { Stack, alpha } from "@mui/material";
 import AIAssistant from "../components/AIAssistant";
 import CommandBar from "../components/CommandBar";
+import AdminMessageCenter from "../components/AdminMessageCenter";
 import { useState, useEffect } from "react";
 import { brand } from "../theme/shared/themePrimitives";
 
 const RootLayout = () => {
   const [commandBarOpen, setCommandBarOpen] = useState(false);
+  const [messageCenterOpen, setMessageCenterOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -62,10 +64,17 @@ const RootLayout = () => {
             mb: "52px",
           }}
         >
-          <Header onOpenCommandBar={() => setCommandBarOpen(true)} />
+          <Header 
+            onOpenCommandBar={() => setCommandBarOpen(true)} 
+            onOpenMessageCenter={() => setMessageCenterOpen(true)}
+          />
           <Outlet />
         </Stack>
         <AIAssistant />
+        <AdminMessageCenter 
+          open={messageCenterOpen} 
+          onClose={() => setMessageCenterOpen(false)} 
+        />
         <CommandBar 
           open={commandBarOpen} 
           onClose={() => setCommandBarOpen(false)} 

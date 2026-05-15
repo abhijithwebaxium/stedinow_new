@@ -74,6 +74,7 @@ const UserSchema = new Schema(
       default: 'Active',
       enum: ['Active', 'Inactive', 'Suspended', 'Pending'],
       required: true,
+      index: true,
     },
     createdBy: {
       type: Types.ObjectId,
@@ -109,7 +110,6 @@ const UserSchema = new Schema(
 );
 
 // Indexes
-UserSchema.index({ status: 1 });
 UserSchema.index({ role: 1 });
 
 export default model('User', UserSchema);

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import Stack from "@mui/material/Stack";
 import NavbarBreadcrumbs from "./NavbarBreadcrumbs";
 import ColorModeIconDropdown from "../theme/shared/ColorModeIconDropdown";
@@ -13,12 +14,77 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import ButtonBase from "@mui/material/ButtonBase";
+import Badge from "@mui/material/Badge";
+import ChatIcon from "@mui/icons-material/Chat";
+import NotificationIcon from "@mui/icons-material/NotificationsNoneOutlined";
 import { alpha, useTheme } from "@mui/material/styles";
+import { initiateSocketConnection, disconnectSocket, joinAdminRoom } from "../utils/socket";
+import AdminNotificationFeed from "./AdminNotificationFeed";
 
-export default function Header({ onOpenCommandBar }) {
+export default function Header({ onOpenCommandBar, onOpenMessageCenter }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const theme = useTheme();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifAnchor, setNotifAnchor] = useState(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get("/api/students/messages/all");
+      if (res.data.status === 'success') {
+        const totalUnread = res.data.chats.reduce((acc, chat) => acc + (chat.unreadCount > 0 ? 1 : 0), 0);
+        setUnreadCount(totalUnread);
+      }
+    } catch (error) {
+      console.error("Failed to fetch unread messages count:", error);
+    }
+  };
+
+  const fetchUnreadNotifications = async () => {
+    try {
+      const res = await api.get("/api/notifications");
+      if (res.data.status === 'success') {
+        const count = res.data.notifications.filter(n => !n.read).length;
+        setUnreadNotifications(count);
+      }
+    } catch (error) {
+      console.error("Failed to fetch unread notifications count:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    fetchUnreadNotifications();
+    
+    // Real-time updates via Socket
+    const socket = initiateSocketConnection();
+    joinAdminRoom();
+
+    socket.on('new_message', (msg) => {
+      if (msg.sender === 'student') {
+        fetchUnreadCount();
+      }
+    });
+
+    socket.on('messages_read', () => {
+      fetchUnreadCount();
+    });
+
+    socket.on('new_admin_notification', () => {
+      fetchUnreadNotifications();
+    });
+
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      fetchUnreadNotifications();
+    }, 60000);
+
+    return () => {
+      clearInterval(interval);
+      disconnectSocket();
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -80,6 +146,52 @@ export default function Header({ onOpenCommandBar }) {
         </ButtonBase>
 
         <ColorModeIconDropdown />
+
+        <Tooltip title="Messages">
+          <MenuButton 
+            aria-label="messages" 
+            onClick={onOpenMessageCenter}
+            sx={{
+              color: unreadCount > 0 ? 'primary.main' : 'inherit'
+            }}
+          >
+            <Badge 
+              badgeContent={unreadCount} 
+              color="error"
+              sx={{ '& .MuiBadge-badge': { fontWeight: 900 } }}
+            >
+              <ChatIcon />
+            </Badge>
+          </MenuButton>
+        </Tooltip>
+
+        <Tooltip title="Notifications">
+          <MenuButton 
+            aria-label="notifications" 
+            onClick={(e) => setNotifAnchor(e.currentTarget)}
+            sx={{
+              color: unreadNotifications > 0 ? 'primary.main' : 'inherit'
+            }}
+          >
+            <Badge 
+              badgeContent={unreadNotifications} 
+              color="error"
+              sx={{ '& .MuiBadge-badge': { fontWeight: 900 } }}
+            >
+              <NotificationIcon />
+            </Badge>
+          </MenuButton>
+        </Tooltip>
+
+        <AdminNotificationFeed 
+          anchorEl={notifAnchor}
+          open={Boolean(notifAnchor)}
+          onClose={() => {
+            setNotifAnchor(null);
+            fetchUnreadNotifications();
+          }}
+        />
+
         <Tooltip title="Logout">
           <MenuButton 
             aria-label="logout" 

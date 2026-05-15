@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { enqueueSnackbar } from 'notistack';
 import {
   Dialog,
   DialogTitle,
@@ -119,7 +120,7 @@ const EditPartnerModal = ({ open, onClose, onPartnerUpdated, partner }) => {
         { withCredentials: true }
       );
 
-      alert('Partner updated successfully!');
+      enqueueSnackbar('Partner updated successfully!', { variant: 'success' });
       onPartnerUpdated();
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred while updating partner');

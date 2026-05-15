@@ -41,7 +41,8 @@ export default {
     password: process.env.EMAIL_PASS,
   },
   gemini: {
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.trim() : undefined,
+    model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
   },
   whatsapp: {
     token: process.env.WHATSAPP_TOKEN,
@@ -52,5 +53,6 @@ export default {
   },
   app: {
     url: process.env.URL || 'http://localhost:3000',
+    backendUrl: process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 4000}`,
   },
 };

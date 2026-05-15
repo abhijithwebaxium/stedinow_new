@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { enqueueSnackbar } from 'notistack';
 import {
   Dialog,
   DialogTitle,
@@ -189,7 +190,7 @@ const AddPartnerModal = ({ open, onClose, onPartnerAdded }) => {
       setShowPassword(false);
 
       onPartnerAdded();
-      alert('Partner created successfully!');
+      enqueueSnackbar('Partner created successfully!', { variant: 'success' });
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred while creating partner');
     } finally {

@@ -124,6 +124,12 @@ const AddStudentModal = ({ open, onClose, onStudentAdded }) => {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     // Validate main phone number length
     const expectedLength = getPhoneLengthForCode(formData.phoneCode);
     if (formData.phone.length !== expectedLength) {

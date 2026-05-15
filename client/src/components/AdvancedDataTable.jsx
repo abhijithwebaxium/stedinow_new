@@ -16,6 +16,8 @@ import {
   Checkbox,
   Tooltip,
   Zoom,
+  Skeleton,
+  Collapse,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
@@ -28,6 +30,9 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import { useEffect } from 'react';
 import CustomDropdown from './customComponents/CustomDropdown';
 import BasicMenu from './customComponents/BasicMenu';
 import CustomComboBox from './customComponents/CustomComboBox';
@@ -122,6 +127,7 @@ function AdvancedDataTable({
   filterOptions = [],
   sortOptions = [],
   onExportCSV,
+  bulkActions = [], // [{ label, icon, onClick(selectedIds) }]
 }) {
   const theme = useTheme();
   const [page, setPage] = useState(0);
@@ -131,6 +137,77 @@ function AdvancedDataTable({
   const [sort, setSort] = useState(null);
   const [triggerClose, setTriggerClose] = useState(false);
   const [columnSearch, setColumnSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [presets, setPresets] = useState([]);
+  const [presetName, setPresetName] = useState('');
+
+  // Load presets from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('stedinow_table_presets');
+    if (saved) {
+      try {
+        setPresets(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse presets', e);
+      }
+    }
+  }, []);
+
+  const savePresets = (newPresets) => {
+    setPresets(newPresets);
+    localStorage.setItem('stedinow_table_presets', JSON.stringify(newPresets));
+  };
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) return;
+    const activeFilters = filters.filter(f => f.filter && f.value);
+    if (activeFilters.length === 0) return;
+
+    const newPreset = {
+      id: Date.now(),
+      name: presetName.trim(),
+      filters: activeFilters,
+      columns: filteredColumns.map(c => ({ field: c.field, hidden: !!c.hidden })),
+      sort
+    };
+
+    savePresets([...presets, newPreset]);
+    setPresetName('');
+  };
+
+  const handleApplyPreset = (p) => {
+    setFilters(p.filters.length > 0 ? p.filters : [{ id: 1, filter: '', value: '' }]);
+    if (p.columns) {
+      setFilteredColumns(prev => prev.map(col => {
+        const savedCol = p.columns.find(sc => sc.field === col.field);
+        return savedCol ? { ...col, hidden: savedCol.hidden } : col;
+      }));
+    }
+    if (p.sort !== undefined) setSort(p.sort);
+    setTriggerClose(!triggerClose);
+  };
+
+  const handleDeletePreset = (id) => {
+    savePresets(presets.filter(p => p.id !== id));
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedIds(new Set(paginatedData.map(r => r._id || r.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -387,6 +464,63 @@ function AdvancedDataTable({
     onClick: () => setSort(option.value),
   }));
 
+  // Presets content
+  const presetContent = (
+    <Box sx={{ minWidth: 280 }}>
+      <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, color: 'text.secondary' }}>
+          Save Current Filter as Preset
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <CustomInput 
+            placeholder="Preset Name" 
+            value={presetName}
+            onChange={(e) => setPresetName(e.target.value)}
+            sx={{ flex: 1 }}
+          />
+          <Button 
+            variant="contained" 
+            size="small" 
+            onClick={handleSavePreset}
+            disabled={!presetName.trim() || filters.every(f => !f.value)}
+            sx={{ minWidth: 40, p: 0 }}
+          >
+            <AddIcon />
+          </Button>
+        </Stack>
+      </Box>
+      <Stack sx={{ maxHeight: 300, overflow: 'auto', p: 1 }}>
+        {presets.length === 0 ? (
+          <Typography variant="body2" sx={{ p: 2, textAlign: 'center', color: 'text.secondary', fontStyle: 'italic' }}>
+            No saved presets
+          </Typography>
+        ) : (
+          presets.map(p => (
+            <Box 
+              key={p.id} 
+              sx={{ 
+                p: 1, borderRadius: '8px', 
+                display: 'flex', alignItems: 'center', 
+                '&:hover': { bgcolor: alpha(theme.palette.divider, 0.05) } 
+              }}
+            >
+              <Typography 
+                variant="body2" 
+                onClick={() => handleApplyPreset(p)}
+                sx={{ flex: 1, cursor: 'pointer', fontWeight: 600, color: 'text.primary' }}
+              >
+                {p.name}
+              </Typography>
+              <IconButton size="small" color="error" onClick={() => handleDeletePreset(p.id)} sx={{ opacity: 0.6, '&:hover': { opacity: 1 } }}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          ))
+        )}
+      </Stack>
+    </Box>
+  );
+
   return (
     <TableContainer
       component={Box}
@@ -456,11 +590,56 @@ function AdvancedDataTable({
             data={sortContent}
           />
         )}
+        <CustomDropdown
+          buttonText={'Presets'}
+          sx={{ padding: '8px 12px', height: '2.25rem', fontSize: '13px' }}
+          startIcon={<BookmarkIcon sx={{ fontSize: '18px !important' }} />}
+          menuSx={{
+            top: '60px !important',
+            minWidth: '280px',
+          }}
+          content={presetContent}
+          triggerClose={triggerClose}
+        />
       </Box>
+
+      {/* Bulk action toolbar */}
+      <Collapse in={selectedIds.size > 0}>
+        <Box sx={{ px: 3, py: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.06), borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main', flex: 1 }}>
+            {selectedIds.size} selected
+          </Typography>
+          {bulkActions.map((action, i) => (
+            <Button
+              key={i}
+              size="small"
+              variant="outlined"
+              startIcon={action.icon}
+              onClick={() => { action.onClick(Array.from(selectedIds)); clearSelection(); }}
+              sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 700, fontSize: '0.8rem' }}
+            >
+              {action.label}
+            </Button>
+          ))}
+          <Button size="small" onClick={clearSelection} sx={{ borderRadius: '10px', textTransform: 'none', fontWeight: 700, fontSize: '0.8rem', color: 'text.secondary' }}>
+            Clear
+          </Button>
+        </Box>
+      </Collapse>
 
       <StyledTable aria-label="advanced data table">
         <TableHead>
           <StyledTableHeadRow>
+            {bulkActions.length > 0 && (
+              <TableCell padding="checkbox" sx={{ width: 48 }}>
+                <Checkbox
+                  size="small"
+                  indeterminate={selectedIds.size > 0 && selectedIds.size < paginatedData.length}
+                  checked={paginatedData.length > 0 && selectedIds.size === paginatedData.length}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
+              </TableCell>
+            )}
             {filteredColumns.map(
               (column) =>
                 !column.hidden && (
@@ -481,44 +660,60 @@ function AdvancedDataTable({
         </TableHead>
         <TableBody>
           {loading ? (
-            <TableRow>
-              <TableCell colSpan={filteredColumns.length} align="center" sx={{ py: 5 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Loading...
-                </Typography>
-              </TableCell>
-            </TableRow>
+            Array.from({ length: 8 }).map((_, i) => (
+              <TableRow key={i}>
+                {bulkActions.length > 0 && <TableCell padding="checkbox"><Skeleton variant="rectangular" width={20} height={20} sx={{ borderRadius: '4px', mx: 'auto' }} /></TableCell>}
+                {filteredColumns.filter(c => !c.hidden).map((col) => (
+                  <StyledTableCell key={col.field}>
+                    <Skeleton variant="text" width={`${60 + Math.random() * 30}%`} height={20} />
+                  </StyledTableCell>
+                ))}
+              </TableRow>
+            ))
           ) : paginatedData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={filteredColumns.length} align="center" sx={{ py: 5 }}>
+              <TableCell colSpan={filteredColumns.length + (bulkActions.length > 0 ? 1 : 0)} align="center" sx={{ py: 5 }}>
                 <Typography variant="body2" color="text.secondary">
                   No data available.
                 </Typography>
               </TableCell>
             </TableRow>
           ) : (
-            paginatedData.map((row, rowIndex) => (
-              <StyledTableRow key={row._id || row.id || rowIndex}>
-                {filteredColumns.map(
-                  (column) =>
-                    !column.hidden && (
-                      <StyledTableCell key={column.field}>
-                        <Tooltip
-                          title={column.render ? '' : row[column.field] || ''}
-                          disableInteractive
-                          slots={{ transition: Zoom }}
-                        >
-                          <StyledTypography component="span" noWrap>
-                            {column.render
-                              ? column.render(row[column.field], row)
-                              : row[column.field]}
-                          </StyledTypography>
-                        </Tooltip>
-                      </StyledTableCell>
-                    )
-                )}
-              </StyledTableRow>
-            ))
+            paginatedData.map((row, rowIndex) => {
+              const rowId = row._id || row.id || rowIndex;
+              const isSelected = selectedIds.has(rowId);
+              return (
+                <StyledTableRow
+                  key={rowId}
+                  selected={isSelected}
+                  sx={isSelected ? { bgcolor: alpha(theme.palette.primary.main, 0.04) } : {}}
+                >
+                  {bulkActions.length > 0 && (
+                    <TableCell padding="checkbox">
+                      <Checkbox size="small" checked={isSelected} onChange={() => handleSelectRow(rowId)} />
+                    </TableCell>
+                  )}
+                  {filteredColumns.map(
+                    (column) =>
+                      !column.hidden && (
+                        <StyledTableCell key={column.field}>
+                          <Tooltip
+                            title={column.render ? '' : row[column.field] || ''}
+                            disableInteractive
+                            slots={{ transition: Zoom }}
+                          >
+                            <StyledTypography component="span" noWrap>
+                              {column.render
+                                ? column.render(row[column.field], row)
+                                : row[column.field]}
+                            </StyledTypography>
+                          </Tooltip>
+                        </StyledTableCell>
+                      )
+                  )}
+                </StyledTableRow>
+              );
+            })
           )}
         </TableBody>
       </StyledTable>

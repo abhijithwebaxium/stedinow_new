@@ -30,7 +30,6 @@ async function saveChatMessage(userId, conversationId, type, content, query = nu
     }
 
     const message = await ChatMessage.create(messageData);
-    console.log(`[Chat] Saved ${type} message for conversation ${conversationId}`);
     return message;
   } catch (error) {
     console.error('[Chat] Failed to save message:', error.message);
@@ -50,7 +49,6 @@ async function getOrCreateConversation(userId, title = null) {
       messageCount: 0
     });
 
-    console.log(`[Chat] Created new conversation: ${conversation._id}`);
     return conversation;
   } catch (error) {
     console.error('[Chat] Failed to create conversation:', error.message);
@@ -97,7 +95,6 @@ async function trackErrorQuery(query, error, statusCode, processingTime, req, co
     };
 
     await ErrorQuery.create(errorQueryData);
-    console.log(`[MCP Error Tracking] Saved error query: ${query.substring(0, 50)}...`);
   } catch (trackingError) {
     console.error('[MCP Error Tracking] Failed to track error query:', trackingError.message);
   }
@@ -143,10 +140,6 @@ router.post('/query', async (req, res) => {
 
   try {
     trimmedInput = input.trim();
-    console.log(`[MCP Query] Processing: "${trimmedInput.substring(0, 100)}${trimmedInput.length > 100 ? '...' : ''}"`);
-
-    // Resolve context using AI
-    console.log(`[MCP Query] Resolving context for: "${trimmedInput}"`);
 
     try {
       context = await resolveContext(trimmedInput);
@@ -155,19 +148,13 @@ router.post('/query', async (req, res) => {
         console.error('[MCP Query] Invalid context resolved:', context);
         throw new Error('Invalid context resolution: Unable to understand the query structure');
       }
-
-      console.log(`[MCP Query] Context resolved successfully:`, JSON.stringify(context, null, 2));
     } catch (contextError) {
       console.error(`[MCP Query] Context resolution failed:`, contextError.message);
       throw contextError;
     }
 
-    // Execute query with original input for message generation
-    console.log(`[MCP Query] Executing query with context`);
     const result = await executeQuery(context, trimmedInput);
     const processingTime = Date.now() - startTime;
-
-    console.log(`[MCP Query] Completed in ${processingTime}ms`);
 
     // Handle chat conversation if userId is provided
     let chatConversationId = conversationId;

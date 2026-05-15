@@ -1,5 +1,14 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 const router = express.Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { status: 'error', message: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 import {
   partnerLogin,
@@ -17,7 +26,7 @@ import {
 import { requirePartnerAuth, isPartnerAuthenticated } from '../middleware/auth.js';
 
 // ========== PUBLIC ROUTES ==========
-router.post('/login', partnerLogin);
+router.post('/login', loginLimiter, partnerLogin);
 
 // ========== PROTECTED ROUTES (Apply middleware to all routes below) ==========
 router.use(requirePartnerAuth);

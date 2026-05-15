@@ -15,10 +15,13 @@ import {
   Chip,
   Avatar,
   LinearProgress,
+  Stack,
+  Badge,
   useTheme,
   useMediaQuery,
 } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
+import { initiateSocketConnection, disconnectSocket, joinAdminRoom } from "../utils/socket";
 import { GlassCard as SharedGlassCard } from '../components/styled';
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -87,6 +90,7 @@ function Dashboard() {
     conversionRate: 0,
   });
   const [recentStudents, setRecentStudents] = useState([]);
+  const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -95,9 +99,11 @@ function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const studentsRes = await axios.get(`${API_URL}/api/students`, {
-        withCredentials: true,
-      });
+      // Fetch students and chats in parallel
+      const [studentsRes, chatsRes] = await Promise.all([
+        axios.get(`${API_URL}/api/students`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/students/messages/all`, { withCredentials: true })
+      ]);
 
       if (studentsRes.data.status === "success") {
         const students = studentsRes.data.students || [];
@@ -128,11 +134,14 @@ function Dashboard() {
           conversionRate,
         });
 
-        // Get recent 5 students
         const recent = students
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, 5);
         setRecentStudents(recent);
+      }
+
+      if (chatsRes.data.status === 'success') {
+        setRecentChats(chatsRes.data.chats.slice(0, 4));
       }
     } catch (err) {
       console.error("Failed to fetch dashboard data:", err);
@@ -140,6 +149,27 @@ function Dashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDashboardData(); // Initial load
+    
+    const socket = initiateSocketConnection();
+    joinAdminRoom();
+
+    socket.on('new_message', (msg) => {
+      if (msg.sender === 'student') {
+        fetchDashboardData(); // Refresh chats when new message arrives
+      }
+    });
+
+    socket.on('messages_read', () => {
+      fetchDashboardData(); // Refresh chats when messages are marked as read
+    });
+
+    return () => {
+      disconnectSocket();
+    };
+  }, []);
 
   const PHASE_COLORS = {
     "Lead Acquisition": "#FF4D4F",
@@ -249,6 +279,60 @@ function Dashboard() {
               </CardContent>
             </GlassCard>
           </Grid>
+        </Grid>
+      </Box>
+
+      {/* Recent Chats Section */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: -0.5 }}>
+              Recent Chats
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+              Latest inquiries from students
+            </Typography>
+          </Box>
+        </Box>
+        <Grid container spacing={2}>
+          {recentChats.length === 0 ? (
+            <Grid item xs={12}>
+              <GlassCard sx={{ p: 3, textAlign: 'center' }}>
+                <Typography color="text.secondary">No active chats found.</Typography>
+              </GlassCard>
+            </Grid>
+          ) : (
+            recentChats.map((chat) => (
+              <Grid item xs={12} sm={6} md={3} key={chat.student._id}>
+                <GlassCard sx={{ 
+                  p: 2, 
+                  cursor: 'pointer',
+                  border: chat.unreadCount > 0 ? `2px solid ${brand[400]}` : '1px solid transparent',
+                  background: chat.unreadCount > 0 ? alpha(brand[400], 0.05) : 'inherit'
+                }}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Badge 
+                      color="error" 
+                      badgeContent={chat.unreadCount} 
+                      overlap="circular"
+                    >
+                      <Avatar sx={{ bgcolor: alpha(brand[400], 0.1), color: brand[500], fontWeight: 800 }}>
+                        {chat.student.name.charAt(0)}
+                      </Avatar>
+                    </Badge>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {chat.student.name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {chat.lastMessage?.message}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </GlassCard>
+              </Grid>
+            ))
+          )}
         </Grid>
       </Box>
 

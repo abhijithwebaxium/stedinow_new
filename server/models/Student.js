@@ -96,6 +96,7 @@ const studentSchema = new Schema(
       type: String,
       required: true,
       trim: true,
+      index: true,
     },
     email: {
       type: String,
@@ -660,6 +661,35 @@ const studentSchema = new Schema(
       },
     ],
 
+    // ========== STUDENT PORTAL ==========
+    studentPassword: {
+      type: String, // bcrypt hashed
+    },
+    hasChangedPassword: {
+      type: Boolean,
+      default: false,
+    },
+    shortlistedUniversities: [
+      {
+        type: Types.ObjectId,
+        ref: 'University',
+      },
+    ],
+    notifications: [
+      {
+        type: {
+          type: String,
+          enum: ['document_verified', 'document_rejected', 'phase_changed', 'message', 'application_update', 'deadline', 'general'],
+          required: true,
+        },
+        title: { type: String, required: true },
+        message: { type: String, required: true },
+        read: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now },
+        data: { type: Schema.Types.Mixed },
+      },
+    ],
+
     // ========== RECORD MANAGEMENT ==========
     createdBy: {
       type: Types.ObjectId,
@@ -689,7 +719,6 @@ studentSchema.index({ deleted: 1, currentPhase: 1, currentStage: 1 });
 studentSchema.index({ deleted: 1, currentStatus: 1 });
 studentSchema.index({ email: 1 });
 studentSchema.index({ phone: 1 });
-studentSchema.index({ name: 1 });
 studentSchema.index({ 'leadSource.source': 1 });
 studentSchema.index({ 'assigned.counselor': 1 });
 studentSchema.index({ 'followup.nextFollowupDate': 1 });

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { enqueueSnackbar } from 'notistack';
 import {
   Box,
   Typography,
@@ -48,7 +49,7 @@ function Partners() {
       }
     } catch (err) {
       console.error('Failed to fetch partners:', err);
-      alert('Failed to fetch partners. Please try again.');
+      enqueueSnackbar('Failed to fetch partners. Please try again.', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -86,11 +87,11 @@ function Partners() {
       );
 
       if (response.data.status === 'success') {
-        alert('Password reset successfully. New password has been sent to the partner.');
+        enqueueSnackbar('Password reset successfully. New password has been sent to the partner.', { variant: 'success' });
       }
     } catch (err) {
       console.error('Failed to reset password:', err);
-      alert(err.response?.data?.message || 'Failed to reset password');
+      enqueueSnackbar(err.response?.data?.message || 'Failed to reset password', { variant: 'error' });
     }
   };
 
@@ -105,12 +106,12 @@ function Partners() {
       );
 
       if (response.data.status === 'success') {
-        alert('Partner status updated successfully');
+        enqueueSnackbar('Partner status updated successfully', { variant: 'success' });
         fetchPartners();
       }
     } catch (err) {
       console.error('Failed to update status:', err);
-      alert(err.response?.data?.message || 'Failed to update status');
+      enqueueSnackbar(err.response?.data?.message || 'Failed to update status', { variant: 'error' });
     }
   };
 

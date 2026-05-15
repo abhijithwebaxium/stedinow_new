@@ -1,12 +1,17 @@
 import Students from '../models/Student.js';
 import Document from '../models/document.js';
+import StudentMessage from '../models/studentMessage.js';
+import StudentTask from '../models/studentTask.js';
+import { getIO } from '../utils/socket.js';
 import { isValidObjectId } from '../helper/indexHelper.js';
 import { DEFAULT_VALUES, getChecklistForStage, STAGES } from '../config/constants.js';
 import { validateStageProgression, calculateChecklistProgress, autoCheckDocumentItems } from '../utils/checklistHelper.js';
 import { sendStageNotification } from '../utils/whatsappService.js';
 import { sendStageChangeEmail, sendWelcomeEmail, sendDocumentUploadEmail } from '../utils/emailService.js';
+import { notifyStudent, notifyAdmin, broadcastAdmin } from '../utils/notificationHelper.js';
 import path from 'path';
 import fs from 'fs/promises';
+import bcrypt from 'bcryptjs';
 
 // List all students (excluding frozen and locked)
 export const getAllStudents = async (req, res, next) => {
@@ -61,7 +66,9 @@ export const getStudent = async (req, res, next) => {
       .populate('assigned.counselor', 'name email')
       .populate('assigned.applicationOfficer', 'name email')
       .populate('createdBy', 'name email')
-      .populate('documents');
+      .populate('documents')
+      .populate('statusHistory.changedBy', 'name email')
+      .populate('history.actionDoneBy', 'name email');
 
     if (!student) throw new Error('Student not found');
 
@@ -294,6 +301,14 @@ export const updateStudentStatus = async (req, res, next) => {
         // Don't fail the request if Email fails
         console.error('Email notification failed:', emailError);
       }
+
+      // Send In-App notification
+      await notifyStudent(id, {
+        type: 'phase_changed',
+        title: 'Stage Updated',
+        message: `Your application stage has been updated to "${stage}" by ${counselorName}.`,
+        data: { stage, phase }
+      });
     }
 
     res.status(200).json({ status: 'success', student });
@@ -474,9 +489,85 @@ export const downloadDocument = async (req, res, next) => {
     if (document.fileUrl.startsWith('https://')) {
       res.redirect(document.fileUrl);
     } else {
-      // Local file
-      res.download(document.fileUrl, document.fileName);
+      // Local file - use sendFile to allow browser preview (inline)
+      // res.download forces a download, res.sendFile respects Content-Type
+      res.sendFile(path.resolve(document.fileUrl));
     }
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─────────────────────────────────────────────
+// MESSAGING
+// ─────────────────────────────────────────────
+
+export const getStudentMessages = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+
+    const messages = await StudentMessage.find({ student: id })
+      .sort({ createdAt: 1 })
+      .limit(100);
+
+    // Mark student messages as read when admin views them
+    await StudentMessage.updateMany(
+      { student: id, sender: 'student', read: false },
+      { $set: { read: true, readAt: new Date() } }
+    );
+
+    res.status(200).json({ status: 'success', messages });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const replyToStudent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { message } = req.body;
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+    if (!message?.trim()) throw new Error('Message is required');
+
+    const msg = await StudentMessage.create({
+      student: id,
+      sender: 'counselor',
+      senderName: 'Counselor',
+      message: message.trim(),
+    });
+
+    // Real-time notify student
+    try {
+      getIO().to(id).emit('new_message', msg);
+    } catch (err) {
+      console.error('[Socket] Failed to emit admin reply:', err.message);
+    }
+
+    res.status(201).json({ status: 'success', message: msg });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const markMessagesAsRead = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+
+    await StudentMessage.updateMany(
+      { student: id, sender: 'student', read: false },
+      { $set: { read: true, readAt: new Date() } }
+    );
+
+    // Notify all admin components to refresh unread counts
+    try {
+      getIO().to('admin_room').emit('messages_read', { studentId: id });
+    } catch (err) {
+      console.error('[Socket] Failed to emit messages_read:', err.message);
+    }
+
+    res.status(200).json({ status: 'success' });
   } catch (err) {
     next(err);
   }
@@ -737,6 +828,62 @@ export const getChecklistProgress = async (req, res, next) => {
   }
 };
 
+export const getAllRecentChats = async (req, res, next) => {
+  try {
+    const chats = await StudentMessage.aggregate([
+      // Sort by newest first
+      { $sort: { createdAt: -1 } },
+      // Group by student
+      {
+        $group: {
+          _id: '$student',
+          lastMessage: { $first: '$$ROOT' },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$sender', 'student'] }, { $eq: ['$read', false] }] },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      },
+      // Join with Students collection
+      {
+        $lookup: {
+          from: 'students', // Collection name in MongoDB
+          localField: '_id',
+          foreignField: '_id',
+          as: 'student'
+        }
+      },
+      // Unwind student array
+      { $unwind: '$student' },
+      // Project only needed fields
+      {
+        $project: {
+          student: {
+            _id: 1,
+            name: 1,
+            studentId: 1,
+            email: 1
+          },
+          lastMessage: 1,
+          unreadCount: 1
+        }
+      },
+      // Sort final result by last message date
+      { $sort: { 'lastMessage.createdAt': -1 } }
+    ]);
+
+    res.status(200).json({ status: 'success', chats });
+  } catch (err) {
+    console.error('[RecentChats] Aggregation Error:', err);
+    next(err);
+  }
+};
+
 // Update checklist item (mark as complete/incomplete or schedule)
 export const updateChecklistItem = async (req, res, next) => {
   try {
@@ -812,6 +959,268 @@ export const updateChecklistItem = async (req, res, next) => {
     await student.save();
 
     res.status(200).json({ status: 'success', message: 'Checklist item updated successfully', student });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─────────────────────────────────────────────
+// DOCUMENT VERIFICATION
+// ─────────────────────────────────────────────
+
+export const verifyDocument = async (req, res, next) => {
+  try {
+    const { id, documentId } = req.params;
+    const { notes } = req.body;
+    const { userId } = req.user;
+
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+    if (!isValidObjectId(documentId)) throw new Error('Invalid document ID');
+
+    const document = await Document.findOne({ _id: documentId, student: id });
+    if (!document) throw new Error('Document not found');
+
+    document.status = 'Verified';
+    document.verifiedBy = userId;
+    document.verifiedDate = new Date();
+    if (notes) document.notes = notes;
+    await document.save();
+
+    await notifyStudent(id, {
+      type: 'document_verified',
+      title: 'Document Verified',
+      message: `Your ${document.documentType} has been verified successfully.`,
+      data: { documentId: document._id },
+    });
+
+    res.status(200).json({ status: 'success', document });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const rejectDocument = async (req, res, next) => {
+  try {
+    const { id, documentId } = req.params;
+    const { reason } = req.body;
+    const { userId } = req.user;
+
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+    if (!isValidObjectId(documentId)) throw new Error('Invalid document ID');
+    if (!reason?.trim()) throw new Error('Rejection reason is required');
+
+    const document = await Document.findOne({ _id: documentId, student: id });
+    if (!document) throw new Error('Document not found');
+
+    document.status = 'Rejected';
+    document.rejectionReason = reason;
+    document.verifiedBy = userId;
+    document.verifiedDate = new Date();
+    await document.save();
+
+    await notifyStudent(id, {
+      type: 'document_rejected',
+      title: 'Document Rejected',
+      message: `Your ${document.documentType} was rejected: ${reason}`,
+      data: { documentId: document._id },
+    });
+
+    res.status(200).json({ status: 'success', document });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─────────────────────────────────────────────
+// TASK MANAGEMENT
+// ─────────────────────────────────────────────
+
+export const getStudentTasks = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+    const tasks = await StudentTask.find({ student: id }).sort({ createdAt: -1 });
+    res.status(200).json({ status: 'success', tasks });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const assignTask = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { title, description, type, priority, dueDate } = req.body;
+
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+    if (!title?.trim()) throw new Error('Task title is required');
+
+    const student = await Students.findOne({ _id: id, deleted: false });
+    if (!student) throw new Error('Student not found');
+
+    const task = await StudentTask.create({
+      student: id,
+      title,
+      description,
+      type: type || 'general',
+      priority: priority || 'medium',
+      dueDate: dueDate || undefined,
+      createdBy: 'counselor',
+    });
+
+    await notifyStudent(id, {
+      type: 'general',
+      title: 'New Task Assigned',
+      message: `Your counselor assigned a new task: "${title}"`,
+      data: { taskId: task._id },
+    });
+
+    res.status(201).json({ status: 'success', task });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteStudentTask = async (req, res, next) => {
+  try {
+    const { id, taskId } = req.params;
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+    if (!isValidObjectId(taskId)) throw new Error('Invalid task ID');
+    await StudentTask.deleteOne({ _id: taskId, student: id });
+    res.status(200).json({ status: 'success', message: 'Task deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─────────────────────────────────────────────
+// MANUAL STUDENT NOTIFICATION
+// ─────────────────────────────────────────────
+
+export const sendStudentNotification = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { type, title, message } = req.body;
+
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+    if (!title?.trim() || !message?.trim()) throw new Error('Title and message are required');
+
+    const student = await Students.findOne({ _id: id, deleted: false });
+    if (!student) throw new Error('Student not found');
+
+    student.notifications.push({ type: type || 'general', title, message });
+    await student.save();
+
+    try {
+      getIO().to(id).emit('new_notification', { type: type || 'general', title, message });
+    } catch (_) {}
+
+    res.status(200).json({ status: 'success', message: 'Notification sent' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resetStudentPassword = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    const { userId } = req.user;
+
+    if (!isValidObjectId(id)) throw new Error('Invalid student ID');
+    if (!newPassword || newPassword.length < 8) throw new Error('Password must be at least 8 characters');
+
+    const student = await Students.findOne({ _id: id, deleted: false });
+    if (!student) throw new Error('Student not found');
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    student.studentPassword = hashed;
+    student.hasChangedPassword = false; // Force student to change it on next login
+
+    student.history.push({
+      type: 'Security Update',
+      date: new Date(),
+      notes: 'Student portal password reset by admin',
+      actionDoneBy: userId
+    });
+
+    await student.save();
+
+    res.status(200).json({ status: 'success', message: 'Student password reset successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─────────────────────────────────────────────
+// BULK OPERATIONS
+// ─────────────────────────────────────────────
+
+export const bulkUpdateStudents = async (req, res, next) => {
+  try {
+    const { ids, updates } = req.body;
+    const { userId } = req.user;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new Error('No student IDs provided');
+    }
+
+    const results = [];
+    for (const id of ids) {
+      try {
+        const student = await Students.findOne({ _id: id, deleted: false });
+        if (!student) continue;
+
+        if (updates.counselorId) {
+          student.assigned = student.assigned || {};
+          student.assigned.counselor = updates.counselorId;
+          
+          await notifyStudent(id, {
+            type: 'info',
+            title: 'Counselor Assigned',
+            message: 'A new counselor has been assigned to your application.',
+          });
+
+          student.history.push({
+            type: 'Counselor Assigned',
+            date: new Date(),
+            notes: 'Assigned via bulk operation',
+            actionDoneBy: userId,
+            metadata: { counselorId: updates.counselorId }
+          });
+        }
+
+        if (updates.stage) {
+          const oldStage = student.currentStage;
+          student.currentStage = updates.stage;
+          student.addStatusHistory(student.currentPhase, updates.stage, student.currentStatus, userId, 'Stage updated via bulk operation');
+          
+          await notifyStudent(id, {
+            type: 'phase_changed',
+            title: 'Stage Updated',
+            message: `Your application stage has been updated to "${updates.stage}".`,
+            data: { stage: updates.stage }
+          });
+
+          // Send WhatsApp notification
+          try {
+            await sendStageNotification(student, updates.stage, req.user.name);
+          } catch (e) {
+            console.error('[BulkUpdate] WhatsApp failed:', e.message);
+          }
+        }
+
+        await student.save();
+        results.push(id);
+      } catch (err) {
+        console.error(`Failed to update student ${id}:`, err.message);
+      }
+    }
+
+    res.status(200).json({ 
+      status: 'success', 
+      message: `Successfully updated ${results.length} of ${ids.length} students`,
+      updatedIds: results 
+    });
   } catch (err) {
     next(err);
   }

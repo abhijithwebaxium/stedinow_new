@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { enqueueSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -11,6 +12,8 @@ import {
   ListItemIcon,
   ListItemText,
   Link,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import FollowUpIcon from '@mui/icons-material/Assignment';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -40,6 +43,8 @@ const APPLICATION_STAGES = [
 function Applications() {
   const navigate = useNavigate();
   const theme = useTheme();
+  const [activeTab, setActiveTab] = useState(0); // 0: Active, 1: Completed, 2: All
+  const [allStudents, setAllStudents] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [followupModalOpen, setFollowupModalOpen] = useState(false);
@@ -60,12 +65,9 @@ function Applications() {
         withCredentials: true,
       });
       if (response.data.status === 'success') {
-        // Filter students to only show those in Application Submission stage (2.2) and above
-        const allStudents = response.data.students || [];
-        const applicationStudents = allStudents.filter(student =>
-          student && student.currentStage && APPLICATION_STAGES.includes(student.currentStage)
-        );
-        setStudents(applicationStudents);
+        const studentsData = response.data.students || [];
+        setAllStudents(studentsData);
+        filterByTab(studentsData, activeTab);
       }
     } catch (err) {
       console.error('Failed to fetch applications:', err);
@@ -73,6 +75,30 @@ function Applications() {
       setLoading(false);
     }
   };
+
+  const filterByTab = (data, tabIndex) => {
+    let filtered = [];
+    if (tabIndex === 0) {
+      // Active: Stages 2.2 and 2.3
+      filtered = data.filter(s => APPLICATION_STAGES.includes(s.currentStage));
+    } else if (tabIndex === 1) {
+      // Completed: Stage 4.3 or Success Status
+      filtered = data.filter(s => s.currentStage === 'File Completion' || s.currentStatus === 'Successfully Completed');
+    } else {
+      // All: Phase 2, 3, or 4
+      filtered = data.filter(s => {
+        const phase = s.currentPhase;
+        return phase === 'Student Onboarding' || phase === 'Visa Preparation' || phase === 'Post-Arrival Support';
+      });
+    }
+    setStudents(filtered);
+  };
+
+  useEffect(() => {
+    if (allStudents.length > 0) {
+      filterByTab(allStudents, activeTab);
+    }
+  }, [activeTab]);
 
   const handleFollowup = (student) => {
     setSelectedStudent(student);
@@ -118,7 +144,7 @@ function Applications() {
       fetchApplications();
     } catch (err) {
       console.error('Failed to update stage:', err);
-      alert('Failed to update application stage');
+      enqueueSnackbar('Failed to update application stage', { variant: 'error' });
       fetchApplications();
     }
   };
@@ -377,6 +403,25 @@ function Applications() {
           </Box>
         </Box>
       </HeroBox>
+
+      <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, v) => setActiveTab(v)} 
+          sx={{
+            '& .MuiTab-root': {
+              fontWeight: 800,
+              textTransform: 'none',
+              fontSize: '0.9rem',
+              minWidth: 120,
+            }
+          }}
+        >
+          <Tab label="Active Applications" />
+          <Tab label="Completed" />
+          <Tab label="All Entities" />
+        </Tabs>
+      </Box>
 
       <GlassCard>
 

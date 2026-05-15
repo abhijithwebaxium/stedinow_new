@@ -21,10 +21,33 @@ import MenuBookRoundedIcon from "@mui/icons-material/MenuBookRounded";
 import ContactPhoneRoundedIcon from "@mui/icons-material/ContactPhoneRounded";
 import { selectUser } from "../store/slices/userSlice";
 
+import Badge from "@mui/material/Badge";
+import { useState, useEffect } from "react";
+import api from "../utils/api";
+
 export default function MenuContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useSelector(selectUser);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get("/api/students/messages/all");
+      if (res.data.status === 'success') {
+        const totalUnread = res.data.chats.reduce((acc, chat) => acc + (chat.unreadCount > 0 ? 1 : 0), 0);
+        setUnreadCount(totalUnread);
+      }
+    } catch (error) {
+      console.error("Failed to fetch unread messages count:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const menuGroups = [
     {
@@ -138,7 +161,16 @@ export default function MenuContent() {
                       })}
                     >
                       <ListItemIcon sx={{ minWidth: 36, color: isActive ? '#ffffff' : 'text.secondary' }}>
-                        {item.icon}
+                        {item.text === "Students" ? (
+                          <Badge 
+                            badgeContent={unreadCount} 
+                            color="error" 
+                            variant="dot"
+                            invisible={unreadCount === 0}
+                          >
+                            {item.icon}
+                          </Badge>
+                        ) : item.icon}
                       </ListItemIcon>
                       <ListItemText
                         primary={item.text}

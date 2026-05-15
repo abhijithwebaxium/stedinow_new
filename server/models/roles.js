@@ -145,6 +145,5 @@ const RoleSchema = new Schema(
 
 // Index for performance
 RoleSchema.index({ active: 1 });
-RoleSchema.index({ name: 1 });
 
 export default model('Role', RoleSchema);

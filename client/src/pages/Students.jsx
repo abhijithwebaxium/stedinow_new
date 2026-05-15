@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { enqueueSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -13,14 +14,16 @@ import {
   Link,
 } from '@mui/material';
 import FollowUpIcon from '@mui/icons-material/Assignment';
-import DescriptionIcon from '@mui/icons-material/Description';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import LockIcon from '@mui/icons-material/Lock';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import StepIcon from '@mui/icons-material/Moving';
 import axios from 'axios';
 import AdvancedDataTable from '../components/AdvancedDataTable';
 import StudentFollowupModal from '../components/modals/StudentFollowupModal';
 import StudentDocumentsModal from '../components/modals/StudentDocumentsModal';
+import CustomComboBox from '../components/customComponents/CustomComboBox';
 
 import { alpha, useTheme } from '@mui/material/styles';
 import { HeroBox, GlassCard } from '../components/styled';
@@ -39,10 +42,33 @@ function Students() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [menuStudent, setMenuStudent] = useState(null);
+  const [counselors, setCounselors] = useState([]);
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  const [bulkStageOpen, setBulkStageOpen] = useState(false);
+  const [selectedBulkIds, setSelectedBulkIds] = useState([]);
+  const [bulkCounselorId, setBulkCounselorId] = useState('');
+  const [bulkStage, setBulkStage] = useState('');
+
+  const STAGES = [
+    'Student Registration',
+    'Document Verification',
+    'University Selection',
+    'Application Processing',
+    'Visa Processing',
+    'Pre-Departure',
+  ];
 
   useEffect(() => {
     fetchStudents();
+    fetchCounselors();
   }, []);
+
+  const fetchCounselors = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/users?role=Counselor`, { withCredentials: true });
+      if (res.data.status === 'success') setCounselors(res.data.users || []);
+    } catch (e) { console.error(e); }
+  };
 
   const fetchStudents = async () => {
     try {
@@ -109,7 +135,7 @@ function Students() {
       fetchStudents();
     } catch (err) {
       console.error('Failed to freeze student:', err);
-      alert('Failed to freeze student');
+      enqueueSnackbar('Failed to freeze student', { variant: 'error' });
     }
   };
 
@@ -129,7 +155,7 @@ function Students() {
       fetchStudents();
     } catch (err) {
       console.error('Failed to lock student:', err);
-      alert(err.response?.data?.message || 'Failed to lock student');
+      enqueueSnackbar(err.response?.data?.message || 'Failed to lock student', { variant: 'error' });
     }
   };
 
@@ -318,6 +344,32 @@ function Students() {
     },
   ];
 
+  const handleBulkFreeze = async (ids) => {
+    const count = ids.length;
+    if (!window.confirm(`Are you sure you want to freeze ${count} student${count > 1 ? 's' : ''}?`)) return;
+    try {
+      await Promise.all(
+        ids.map(id => axios.post(`${API_URL}/api/students/${id}/freeze`, { reason: 'Bulk freeze', notes: '' }, { withCredentials: true }))
+      );
+      enqueueSnackbar(`${count} student${count > 1 ? 's' : ''} frozen`, { variant: 'success' });
+      fetchStudents();
+    } catch {
+      enqueueSnackbar('Failed to freeze some students', { variant: 'error' });
+    }
+  };
+
+  const handleBulkUpdate = async (ids, updates) => {
+    try {
+      const res = await axios.patch(`${API_URL}/api/students/bulk`, { ids, updates }, { withCredentials: true });
+      enqueueSnackbar(res.data.message, { variant: 'success' });
+      fetchStudents();
+      setBulkAssignOpen(false);
+      setBulkStageOpen(false);
+    } catch (err) {
+      enqueueSnackbar(err.response?.data?.message || 'Bulk update failed', { variant: 'error' });
+    }
+  };
+
   // Filter options
   const filterOptions = [
     'studentId',
@@ -364,6 +416,23 @@ function Students() {
           filterOptions={filterOptions}
           sortOptions={sortOptions}
           onExportCSV={handleExportCSV}
+          bulkActions={[
+            { 
+              label: 'Assign Counselor', 
+              icon: <AssignmentIndIcon sx={{ fontSize: 16 }} />, 
+              onClick: (ids) => { setSelectedBulkIds(ids); setBulkAssignOpen(true); } 
+            },
+            { 
+              label: 'Change Stage', 
+              icon: <StepIcon sx={{ fontSize: 16 }} />, 
+              onClick: (ids) => { setSelectedBulkIds(ids); setBulkStageOpen(true); } 
+            },
+            { 
+              label: 'Freeze Selected', 
+              icon: <AcUnitIcon sx={{ fontSize: 16 }} />, 
+              onClick: handleBulkFreeze 
+            },
+          ]}
         />
       </GlassCard>
 
@@ -397,6 +466,64 @@ function Students() {
           </ListItemIcon>
           <ListItemText>Lock Student</ListItemText>
         </MenuItem>
+      </Menu>
+
+      {/* Bulk Assign Dialog */}
+      <Menu
+        anchorEl={null}
+        open={bulkAssignOpen}
+        onClose={() => setBulkAssignOpen(false)}
+        sx={{ '& .MuiPaper-root': { width: 300, p: 2, borderRadius: '16px' } }}
+        component={Box}
+        anchorReference="none"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>Assign Counselor</Typography>
+        <Stack spacing={2}>
+          <CustomComboBox 
+            placeholder="Select Counselor"
+            data={counselors.map(c => ({ label: c.name, value: c._id }))}
+            onChange={(e) => setBulkCounselorId(e.target.value)}
+          />
+          <Button 
+            variant="contained" 
+            onClick={() => handleBulkUpdate(selectedBulkIds, { counselorId: bulkCounselorId })}
+            disabled={!bulkCounselorId}
+            fullWidth
+          >
+            Assign to {selectedBulkIds.length} Students
+          </Button>
+          <Button variant="text" onClick={() => setBulkAssignOpen(false)}>Cancel</Button>
+        </Stack>
+      </Menu>
+
+      {/* Bulk Stage Dialog */}
+      <Menu
+        anchorEl={null}
+        open={bulkStageOpen}
+        onClose={() => setBulkStageOpen(false)}
+        sx={{ '& .MuiPaper-root': { width: 300, p: 2, borderRadius: '16px' } }}
+        component={Box}
+        anchorReference="none"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>Change Stage</Typography>
+        <Stack spacing={2}>
+          <CustomComboBox 
+            placeholder="Select Stage"
+            data={STAGES.map(s => ({ label: s, value: s }))}
+            onChange={(e) => setBulkStage(e.target.value)}
+          />
+          <Button 
+            variant="contained" 
+            onClick={() => handleBulkUpdate(selectedBulkIds, { stage: bulkStage })}
+            disabled={!bulkStage}
+            fullWidth
+          >
+            Update {selectedBulkIds.length} Students
+          </Button>
+          <Button variant="text" onClick={() => setBulkStageOpen(false)}>Cancel</Button>
+        </Stack>
       </Menu>
     </Box>
   );

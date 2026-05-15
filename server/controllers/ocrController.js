@@ -3,7 +3,7 @@ import config from '../config/index.js';
 import fs from 'fs';
 
 const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const model = genAI.getGenerativeModel({ model: config.gemini.model });
 
 /**
  * Processes a document image using Gemini Vision to extract key identity information

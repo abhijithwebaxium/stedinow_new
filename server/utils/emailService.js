@@ -142,7 +142,7 @@ export const sendStageChangeEmail = async (student, stageName, counselorName) =>
 
             <p>If you have any questions or concerns, please don't hesitate to reach out to your counselor.</p>
 
-            <a href="http://localhost:3000" class="button">View Your Application</a>
+            <a href="https://stedinow-new.vercel.app/student/login" class="button" style="color: #ffffff !important; text-decoration: none;">View Your Application</a>
 
             <div class="footer">
               <p>This is an automated email from StediNow.</p>
@@ -496,7 +496,7 @@ export const sendWelcomeEmail = async (student) => {
 
             <p>You can track your progress and upload documents through our student portal.</p>
 
-            <a href="http://localhost:3000" class="button">Access Student Portal</a>
+            <a href="https://stedinow-new.vercel.app/student/login" class="button" style="color: #ffffff !important; text-decoration: none;">Access Student Portal</a>
 
             <div class="footer">
               <p><strong>Contact Us</strong></p>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { enqueueSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -97,6 +98,18 @@ function Leads() {
     setMenuLead(null);
   };
 
+  const handleBulkFreeze = async (ids) => {
+    try {
+      await Promise.all(
+        ids.map(id => axios.post(`${API_URL}/api/students/${id}/freeze`, { reason: 'Bulk freeze', notes: '' }, { withCredentials: true }))
+      );
+      enqueueSnackbar(`${ids.length} lead${ids.length > 1 ? 's' : ''} frozen`, { variant: 'success' });
+      fetchLeads();
+    } catch {
+      enqueueSnackbar('Failed to freeze some leads', { variant: 'error' });
+    }
+  };
+
   const handleFreezeStudent = async () => {
     if (!menuLead) return;
     try {
@@ -109,7 +122,7 @@ function Leads() {
       fetchLeads();
     } catch (err) {
       console.error('Failed to freeze lead:', err);
-      alert('Failed to freeze lead');
+      enqueueSnackbar('Failed to freeze lead', { variant: 'error' });
     }
   };
 
@@ -125,7 +138,7 @@ function Leads() {
       fetchLeads();
     } catch (err) {
       console.error('Failed to lock lead:', err);
-      alert(err.response?.data?.message || 'Failed to lock lead');
+      enqueueSnackbar(err.response?.data?.message || 'Failed to lock lead', { variant: 'error' });
     }
   };
 
@@ -344,6 +357,9 @@ function Leads() {
           filterOptions={filterOptions}
           sortOptions={sortOptions}
           onExportCSV={handleExportCSV}
+          bulkActions={[
+            { label: 'Freeze Selected', icon: <AcUnitIcon sx={{ fontSize: 16 }} />, onClick: handleBulkFreeze },
+          ]}
         />
       </GlassCard>
 

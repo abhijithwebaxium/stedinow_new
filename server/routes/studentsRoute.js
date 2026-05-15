@@ -15,6 +15,8 @@ import {
   uploadDocument,
   downloadDocument,
   deleteDocument,
+  verifyDocument,
+  rejectDocument,
   getFrozenStudents,
   getLockedStudents,
   freezeStudent,
@@ -23,6 +25,16 @@ import {
   unlockStudent,
   getChecklistProgress,
   updateChecklistItem,
+  getStudentMessages,
+  replyToStudent,
+  getAllRecentChats,
+  markMessagesAsRead,
+  getStudentTasks,
+  assignTask,
+  deleteStudentTask,
+  sendStudentNotification,
+  resetStudentPassword,
+  bulkUpdateStudents,
 } from '../controllers/studentsController.js';
 
 import {
@@ -36,6 +48,15 @@ import {
 } from '../controllers/paymentsController.js';
 
 router.use(requireAuth);
+
+// Messaging operations
+router.get('/messages/all', isAuthorized('students', 'read'), getAllRecentChats);
+router.get('/:id/messages', isAuthorized('students', 'read'), getStudentMessages);
+router.patch('/:id/messages/read', isAuthorized('students', 'update'), markMessagesAsRead);
+router.post('/:id/messages', isAuthorized('students', 'update'), replyToStudent);
+
+// Bulk operations
+router.patch('/bulk', isAuthorized('students', 'update'), bulkUpdateStudents);
 
 // List all students (excluding frozen and locked)
 router.get('/', isAuthorized('students', 'read'), getAllStudents);
@@ -70,6 +91,10 @@ router.post('/:id/documents', isAuthorized('students', 'update'), upload.single(
 // Download student document
 router.get('/:id/documents/:documentId/download', isAuthorized('students', 'read'), downloadDocument);
 
+// Verify / reject document
+router.patch('/:id/documents/:documentId/verify', isAuthorized('students', 'update'), verifyDocument);
+router.patch('/:id/documents/:documentId/reject', isAuthorized('students', 'update'), rejectDocument);
+
 // Delete student document
 router.delete('/:id/documents/:documentId', isAuthorized('students', 'update'), deleteDocument);
 
@@ -88,6 +113,18 @@ router.post('/:id/unlock', isAuthorized('students', 'update'), unlockStudent);
 router.get('/:id/checklist', isAuthorized('students', 'read'), getChecklistProgress);
 router.patch('/:id/checklist', isAuthorized('students', 'update'), updateChecklistItem);
 router.patch('/:id/checklist/schedule', isAuthorized('students', 'update'), updateChecklistItem);
+ 
+
+// Task management (admin assigns tasks to students)
+router.get('/:id/tasks', isAuthorized('students', 'read'), getStudentTasks);
+router.post('/:id/tasks', isAuthorized('students', 'update'), assignTask);
+router.delete('/:id/tasks/:taskId', isAuthorized('students', 'update'), deleteStudentTask);
+
+// Send manual notification to student
+router.post('/:id/notify', isAuthorized('students', 'update'), sendStudentNotification);
+
+// Reset student password (admin only)
+router.post('/:id/reset-password', isAuthorized('students', 'update'), resetStudentPassword);
 
 // Payment operations
 router.get('/:id/payments', isAuthorized('students', 'read'), getStudentPayments);

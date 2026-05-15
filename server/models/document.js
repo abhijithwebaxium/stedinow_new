@@ -67,7 +67,6 @@ const documentSchema = new Schema(
 );
 
 documentSchema.index({ student: 1, documentType: 1 });
-documentSchema.index({ status: 1 });
 documentSchema.index({ uploadedDate: -1 });
 
 export default model('Document', documentSchema);

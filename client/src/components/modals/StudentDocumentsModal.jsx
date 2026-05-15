@@ -17,8 +17,14 @@ import {
   Divider,
   Tabs,
   Tab,
+  Chip,
+  TextField,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import PendingIcon from '@mui/icons-material/Pending';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -89,6 +95,9 @@ const StudentDocumentsModal = ({ open, onClose, student }) => {
   const [success, setSuccess] = useState('');
   const [uploadProgress, setUploadProgress] = useState({});
   const [tabValue, setTabValue] = useState(0);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [selectedDocId, setSelectedDocId] = useState(null);
 
   useEffect(() => {
     if (open && student) {
@@ -214,15 +223,45 @@ const StudentDocumentsModal = ({ open, onClose, student }) => {
         `${API_URL}/api/students/${student._id}/documents/${documentId}`,
         { withCredentials: true }
       );
-
       setSuccess('Document deleted successfully');
       fetchDocuments();
-
-      setTimeout(() => {
-        setSuccess('');
-      }, 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete document');
+    }
+  };
+
+  const handleVerify = async (documentId) => {
+    try {
+      await axios.patch(
+        `${API_URL}/api/students/${student._id}/documents/${documentId}/verify`,
+        {},
+        { withCredentials: true }
+      );
+      setSuccess('Document verified successfully');
+      fetchDocuments();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to verify document');
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectionReason.trim()) {
+      setError('Please provide a reason for rejection');
+      return;
+    }
+
+    try {
+      await axios.patch(
+        `${API_URL}/api/students/${student._id}/documents/${selectedDocId}/reject`,
+        { reason: rejectionReason },
+        { withCredentials: true }
+      );
+      setSuccess('Document rejected');
+      setRejectDialogOpen(false);
+      setRejectionReason('');
+      fetchDocuments();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to reject document');
     }
   };
 
@@ -249,7 +288,9 @@ const StudentDocumentsModal = ({ open, onClose, student }) => {
         sx={{
           mb: 2,
           border: uploadedDoc ? '2px solid' : '1px solid',
-          borderColor: uploadedDoc ? 'success.main' : 'divider',
+          borderColor: uploadedDoc 
+            ? (uploadedDoc.status === 'Verified' ? 'success.main' : uploadedDoc.status === 'Rejected' ? 'error.main' : 'warning.main') 
+            : 'divider',
         }}
       >
         <CardContent>
@@ -260,7 +301,13 @@ const StudentDocumentsModal = ({ open, onClose, student }) => {
                   {docType}
                 </Typography>
                 {uploadedDoc && (
-                  <CheckCircleIcon color="success" fontSize="small" />
+                  <Chip 
+                    label={uploadedDoc.status} 
+                    size="small" 
+                    color={uploadedDoc.status === 'Verified' ? 'success' : uploadedDoc.status === 'Rejected' ? 'error' : 'warning'}
+                    icon={uploadedDoc.status === 'Verified' ? <CheckCircleIcon /> : uploadedDoc.status === 'Rejected' ? <ErrorIcon /> : <PendingIcon />}
+                    sx={{ height: 20, '& .MuiChip-label': { px: 1, fontSize: '0.65rem', fontWeight: 900 } }}
+                  />
                 )}
               </Box>
 
@@ -273,6 +320,11 @@ const StudentDocumentsModal = ({ open, onClose, student }) => {
                     Size: {formatFileSize(uploadedDoc.fileSize)} |
                     Uploaded: {new Date(uploadedDoc.uploadedDate || uploadedDoc.uploadedAt).toLocaleDateString()}
                   </Typography>
+                  {uploadedDoc.status === 'Rejected' && (
+                    <Typography variant="caption" color="error" display="block" sx={{ mt: 0.5, fontWeight: 600 }}>
+                      Reason: {uploadedDoc.rejectionReason}
+                    </Typography>
+                  )}
                 </>
               )}
 
@@ -313,6 +365,33 @@ const StudentDocumentsModal = ({ open, onClose, student }) => {
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
+                  
+                  <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 20, alignSelf: 'center' }} />
+                  
+                  {uploadedDoc.status !== 'Verified' && (
+                    <IconButton
+                      size="small"
+                      color="success"
+                      onClick={() => handleVerify(uploadedDoc._id)}
+                      title="Approve Document"
+                    >
+                      <ThumbUpIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                  
+                  {uploadedDoc.status !== 'Rejected' && (
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => {
+                        setSelectedDocId(uploadedDoc._id);
+                        setRejectDialogOpen(true);
+                      }}
+                      title="Reject Document"
+                    >
+                      <ThumbDownIcon fontSize="small" />
+                    </IconButton>
+                  )}
                 </>
               ) : (
                 <Button
@@ -432,6 +511,31 @@ const StudentDocumentsModal = ({ open, onClose, student }) => {
       <DialogActions>
         <Button onClick={handleClose}>Close</Button>
       </DialogActions>
+
+      {/* Rejection Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)}>
+        <DialogTitle>Reject Document</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Please provide a reason for rejecting this document. This will be visible to the student.
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Rejection Reason"
+            fullWidth
+            variant="outlined"
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            multiline
+            rows={3}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRejectDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleReject} color="error" variant="contained">Reject</Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 };
