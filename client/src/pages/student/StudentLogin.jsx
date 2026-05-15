@@ -147,7 +147,14 @@ function StudentLogin() {
               required
               sx={{ mb: 3 }}
               InputProps={{
-                sx: { borderRadius: '16px', bgcolor: 'white', border: '1px solid #e2e8f0', '&:hover': { borderColor: '#3B82F6' } },
+                sx: {
+                  borderRadius: '16px',
+                  bgcolor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  color: '#1e293b',
+                  '& input': { color: '#1e293b', '&::placeholder': { color: '#94a3b8', opacity: 1 } },
+                  '&:hover': { borderColor: '#3B82F6' },
+                },
                 startAdornment: (
                   <InputAdornment position="start">
                     <EmailOutlined sx={{ color: '#94a3b8' }} />
@@ -168,7 +175,14 @@ function StudentLogin() {
               required
               sx={{ mb: 4 }}
               InputProps={{
-                sx: { borderRadius: '16px', bgcolor: 'white', border: '1px solid #e2e8f0', '&:hover': { borderColor: '#3B82F6' } },
+                sx: {
+                  borderRadius: '16px',
+                  bgcolor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  color: '#1e293b',
+                  '& input': { color: '#1e293b', '&::placeholder': { color: '#94a3b8', opacity: 1 } },
+                  '&:hover': { borderColor: '#3B82F6' },
+                },
                 startAdornment: (
                   <InputAdornment position="start">
                     <PhoneOutlined sx={{ color: '#94a3b8' }} />

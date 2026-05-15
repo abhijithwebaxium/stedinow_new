@@ -8,8 +8,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
-    borderRadius: '14px', bgcolor: '#f8fafc',
+    borderRadius: '14px',
+    bgcolor: '#f8fafc',
+    color: '#1e293b',
+    '& input': { color: '#1e293b', '&::placeholder': { color: '#94a3b8', opacity: 1 } },
     '& fieldset': { borderColor: alpha('#94a3b8', 0.25) },
+    '&:hover fieldset': { borderColor: '#3B82F6' },
     '&.Mui-focused fieldset': { borderColor: '#3B82F6' },
   },
 };
