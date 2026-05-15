@@ -34,7 +34,16 @@ const StudentSetPassword = () => {
 
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/api/student-portal/change-password`, { newPassword: password }, { withCredentials: true });
+      const spToken = sessionStorage.getItem('sp_token');
+      await axios.post(
+        `${API_URL}/api/student-portal/change-password`,
+        { newPassword: password },
+        {
+          withCredentials: true,
+          headers: spToken ? { Authorization: `Bearer ${spToken}` } : {},
+        }
+      );
+      sessionStorage.removeItem('sp_token');
       navigate('/student/dashboard', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to set password. Please try again.');

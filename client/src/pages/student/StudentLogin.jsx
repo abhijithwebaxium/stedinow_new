@@ -73,6 +73,10 @@ function StudentLogin() {
         localStorage.setItem('user', JSON.stringify(userData));
         // First-time login — force password change before continuing
         if (response.data.mustChangePassword) {
+          // Store token in sessionStorage so set-password page can auth cross-domain
+          if (response.data.token) {
+            sessionStorage.setItem('sp_token', response.data.token);
+          }
           navigate('/student/set-password', { replace: true });
         } else {
           navigate('/student/dashboard');

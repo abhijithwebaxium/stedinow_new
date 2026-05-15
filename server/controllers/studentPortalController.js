@@ -47,7 +47,7 @@ export const studentLogin = async (req, res, next) => {
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: '7d' }
     );
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
     res.cookie('student_access_token', token, {
       httpOnly: true,
       secure: isProd,
@@ -58,6 +58,7 @@ export const studentLogin = async (req, res, next) => {
     res.status(200).json({
       status: 'success',
       mustChangePassword: !student.hasChangedPassword,
+      token, // included so set-password page can auth via header if cookie is blocked cross-domain
       user: { id: student._id, name: student.name, email: student.email, type: 'student' },
     });
   } catch (err) {

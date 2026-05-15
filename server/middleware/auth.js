@@ -246,7 +246,10 @@ export const canPartnerEditStudent = (req, res, next) => {
 // Require student authentication
 export const requireStudentAuth = async (req, res, next) => {
   try {
-    const token = req.cookies?.student_access_token; // Get token from cookies
+    // Accept cookie first; fall back to Authorization header for cross-domain set-password flow
+    const authHeader = req.headers?.authorization;
+    const token = req.cookies?.student_access_token ||
+      (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null);
 
     if (!token) {
       req.user = { isAuthenticated: false };
